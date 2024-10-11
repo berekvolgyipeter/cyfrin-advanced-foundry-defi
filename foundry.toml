@@ -1,0 +1,18 @@
+[profile.default]
+solc = "0.8.27"
+src = "src"
+out = "out"
+libs = ["dependencies"]
+remappings = ["forge-std/=dependencies/forge-std-1.9.2/src/"]
+
+[dependencies]
+forge-std = { version = "1.9.2" }
+
+[soldeer]
+remappings_generate = false
+remappings_regenerate = false
+
+[fuzz]
+runs = 256
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
