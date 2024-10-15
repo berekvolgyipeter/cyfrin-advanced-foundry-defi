@@ -17,8 +17,10 @@ contract HelperConfig is Script {
         address wbtcUsdPriceFeed;
         address weth;
         address wbtc;
+        address deployer;
     }
 
+    address public constant ANVIL_PUBLIC_KEY_0 = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     uint256 public constant ETH_SEPOLIA_CHAIN_ID = 11_155_111;
 
     constructor() {
@@ -29,12 +31,13 @@ contract HelperConfig is Script {
         }
     }
 
-    function getSepoliaEthConfig() public pure returns (NetworkConfig memory sepoliaNetworkConfig) {
+    function getSepoliaEthConfig() public view returns (NetworkConfig memory sepoliaNetworkConfig) {
         sepoliaNetworkConfig = NetworkConfig({
             wethUsdPriceFeed: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
             wbtcUsdPriceFeed: 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43,
             weth: 0xdd13E55209Fd76AfE204dBda4007C227904f0a81,
-            wbtc: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063
+            wbtc: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,
+            deployer: vm.envAddress("PUBLIC_KEY_DEV")
         });
     }
 
@@ -55,7 +58,8 @@ contract HelperConfig is Script {
             wethUsdPriceFeed: address(ethUsdPriceFeed),
             weth: address(wethMock),
             wbtcUsdPriceFeed: address(btcUsdPriceFeed),
-            wbtc: address(wbtcMock)
+            wbtc: address(wbtcMock),
+            deployer: ANVIL_PUBLIC_KEY_0
         });
     }
 }
