@@ -6,7 +6,7 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "openzeppelin/utils/ReentrancyGuard.sol";
 import {DecentralizedStableCoin} from "src/DecentralizedStableCoin.sol";
 
-/*
+/**
  * @title DSCEngine
  *
  * The system is designed to be as minimal as possible, and have the tokens maintain a 1 token == $1 peg at all times.
@@ -89,7 +89,7 @@ contract DSCEngine is ReentrancyGuard {
     function liquidate() external {}
 
     /* ==================== PUBLIC FUNCTIONS ============================================================ */
-    /*
+    /**
      * @param tokenCollateralAddress: The ERC20 token address of the collateral to deposit
      * @param amountCollateral: The amount of collateral to deposit
      */
@@ -108,7 +108,7 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
-    /*
+    /**
      * @param amountDscToMint: The amount of DSC to mint
      * You can only mint DSC if you have enough collateral
      */
