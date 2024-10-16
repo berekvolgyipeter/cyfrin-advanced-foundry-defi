@@ -142,7 +142,7 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     function _calculateHealthFactor(uint256 totalDscMinted, uint256 collateralValueInUsd)
-        internal
+        private
         pure
         returns (uint256)
     {
@@ -153,13 +153,13 @@ contract DSCEngine is ReentrancyGuard {
         return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
     }
 
-    function _healthFactor(address user) private view returns (uint256) {
+    function _getHealthFactor(address user) private view returns (uint256) {
         (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
         return _calculateHealthFactor(totalDscMinted, collateralValueInUsd);
     }
 
     function revertIfHealthFactorIsBroken(address user) internal view {
-        uint256 userHealthFactor = _healthFactor(user);
+        uint256 userHealthFactor = _getHealthFactor(user);
         if (userHealthFactor < MIN_HEALTH_FACTOR) {
             revert DSCEngine__BreaksHealthFactor(userHealthFactor);
         }
@@ -175,7 +175,27 @@ contract DSCEngine is ReentrancyGuard {
         return totalCollateralValueInUsd;
     }
 
+    function getUsdValue(address token, uint256 amount) external view returns (uint256) {
+        return _getUsdValue(token, amount);
+    }
+
+    function getAccountInformation(address user)
+        external
+        view
+        returns (uint256 totalDscMinted, uint256 collateralValueInUsd)
+    {
+        return _getAccountInformation(user);
+    }
+
+    function calculateHealthFactor(uint256 totalDscMinted, uint256 collateralValueInUsd)
+        external
+        pure
+        returns (uint256)
+    {
+        return _calculateHealthFactor(totalDscMinted, collateralValueInUsd);
+    }
+
     function getHealthFactor(address user) external view returns (uint256) {
-        return _healthFactor(user);
+        return _getHealthFactor(user);
     }
 }
