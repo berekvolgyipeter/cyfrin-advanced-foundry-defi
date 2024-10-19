@@ -51,6 +51,13 @@ contract OwnerTest is DSCEngineTest {
 }
 
 contract PriceTest is DSCEngineTest {
+    function testGetTokenAmountFromUsd() public view {
+        uint256 expectedWeth = 0.05 ether;
+        uint256 amountUsd = expectedWeth * ETH_USD_PRICE / 1e18;
+        uint256 amountWeth = dsce.getTokenAmountFromUsd(cfg.weth, amountUsd);
+        assertEq(amountWeth, expectedWeth);
+    }
+
     function testGetUsdValue() public view {
         uint256 ethAmount = 15e18;
         uint256 expectedUsd = ethAmount * ETH_USD_PRICE / 1e18;
