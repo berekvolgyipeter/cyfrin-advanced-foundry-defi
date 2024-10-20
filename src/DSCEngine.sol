@@ -79,7 +79,14 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /* ==================== EXTERNAL FUNCTIONS ============================================================ */
-    function depositCollateralAndMintDsc() external {}
+    function depositCollateralAndMintDsc(
+        address tokenCollateralAddress,
+        uint256 amountCollateral,
+        uint256 amountDscToMint
+    ) external {
+        depositCollateral(tokenCollateralAddress, amountCollateral);
+        mintDsc(amountDscToMint);
+    }
 
     function redeemCollateralForDsc() external {}
 
