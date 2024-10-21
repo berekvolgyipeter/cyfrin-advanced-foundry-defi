@@ -16,13 +16,14 @@ abstract contract DSCEngineTest is Test {
     DecentralizedStableCoin dsc;
     DSCEngine dsce;
 
-    address public USER = makeAddr("USER");
-    address public notAllowedToken = address(new ERC20Mock("NAT", "NAT", msg.sender, 1000e8));
-    address[] public tokenAddresses;
-    address[] public feedAddresses;
     uint256 public constant ETH_USD_PRICE = 2000e18;
     uint256 public constant AMOUNT_COLLATERAL = 10 ether;
     uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
+
+    address public USER = makeAddr("USER");
+    address public notAllowedToken = address(new ERC20Mock("NAT", "NAT", USER, AMOUNT_COLLATERAL));
+    address[] public tokenAddresses;
+    address[] public feedAddresses;
 
     event CollateralDeposited(address indexed user, address indexed token, uint256 amount);
 
@@ -41,6 +42,17 @@ abstract contract DSCEngineTest is Test {
         dsce.depositCollateral(cfg.weth, AMOUNT_COLLATERAL);
         vm.stopPrank();
         _;
+    }
+}
+
+contract ConstructorTest is DSCEngineTest {
+    function testRevertsIfTokenLengthDoesntMatchPriceFeeds() public {
+        tokenAddresses.push(cfg.weth);
+        feedAddresses.push(cfg.wethUsdPriceFeed);
+        feedAddresses.push(cfg.wbtcUsdPriceFeed);
+
+        vm.expectRevert(DSCEngine.DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch.selector);
+        new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
     }
 }
 
