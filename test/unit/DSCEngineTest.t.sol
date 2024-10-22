@@ -238,3 +238,26 @@ contract MintDscTest is DSCEngineTest {
         assertEq(depositedAmount, amountCollateral);
     }
 }
+
+contract BurnDscTest is DSCEngineTest {
+    function testRevertsIfBurnAmountIsZero() public depositedCollateral mintedDsc {
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        vm.prank(user);
+        dsce.burnDsc(0);
+    }
+
+    function testCantBurnMoreThanUserHas() public {
+        vm.expectRevert();
+        vm.prank(user);
+        dsce.burnDsc(1);
+    }
+
+    function testCanBurnDsc() public depositedCollateral mintedDsc {
+        vm.startPrank(user);
+        dsc.approve(address(dsce), amountToMint);
+        dsce.burnDsc(amountToMint);
+        vm.stopPrank();
+
+        assertEq(dsc.balanceOf(user), 0);
+    }
+}
