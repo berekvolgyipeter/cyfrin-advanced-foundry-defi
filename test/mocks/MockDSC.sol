@@ -20,12 +20,8 @@ contract MockDSC is ERC20Burnable, Ownable {
         }
         super.burn(_amount);
     }
-}
 
-contract MockDSCFailedMint is MockDSC {
-    constructor(address initialOwner) MockDSC(initialOwner) {}
-
-    function mint(address _to, uint256 _amount) public onlyOwner returns (bool) {
+    function mint(address _to, uint256 _amount) public virtual onlyOwner returns (bool) {
         if (_to == address(0)) {
             revert DecentralizedStableCoin__NotZeroAddress();
         }
@@ -33,16 +29,21 @@ contract MockDSCFailedMint is MockDSC {
             revert DecentralizedStableCoin__AmountMustBeMoreThanZero();
         }
         _mint(_to, _amount);
+        return true;
+    }
+}
+
+contract MockDSCFailedMint is MockDSC {
+    constructor(address initialOwner) MockDSC(initialOwner) {}
+
+    function mint(address _to, uint256 _amount) public override onlyOwner returns (bool) {
+        super.mint(_to, _amount);
         return false;
     }
 }
 
 contract MockDSCFailedTransfer is MockDSC {
     constructor(address initialOwner) MockDSC(initialOwner) {}
-
-    function mint(address account, uint256 amount) public onlyOwner {
-        _mint(account, amount);
-    }
 
     function transfer(address, /*recipient*/ uint256 /*amount*/ ) public pure override returns (bool) {
         return false;
@@ -51,10 +52,6 @@ contract MockDSCFailedTransfer is MockDSC {
 
 contract MockDSCFailedTransferFrom is MockDSC {
     constructor(address initialOwner) MockDSC(initialOwner) {}
-
-    function mint(address account, uint256 amount) public onlyOwner {
-        _mint(account, amount);
-    }
 
     function transferFrom(address, /*sender*/ address, /*recipient*/ uint256 /*amount*/ )
         public
