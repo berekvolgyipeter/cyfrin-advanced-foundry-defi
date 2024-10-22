@@ -4,7 +4,7 @@ pragma solidity 0.8.27;
 import {ERC20Burnable, ERC20} from "openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 
-contract MockFailedMintDSC is ERC20Burnable, Ownable {
+contract MockDSC is ERC20Burnable, Ownable {
     error DecentralizedStableCoin__AmountMustBeMoreThanZero();
     error DecentralizedStableCoin__BurnAmountExceedsBalance();
     error DecentralizedStableCoin__NotZeroAddress();
@@ -12,17 +12,20 @@ contract MockFailedMintDSC is ERC20Burnable, Ownable {
     constructor(address initialOwner) ERC20("DecentralizedStableCoin", "DSC") Ownable(initialOwner) {}
 
     function burn(uint256 _amount) public override onlyOwner {
-        uint256 balance = balanceOf(msg.sender);
         if (_amount <= 0) {
             revert DecentralizedStableCoin__AmountMustBeMoreThanZero();
         }
-        if (balance < _amount) {
+        if (balanceOf(msg.sender) < _amount) {
             revert DecentralizedStableCoin__BurnAmountExceedsBalance();
         }
         super.burn(_amount);
     }
+}
 
-    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
+contract MockDSCFailedMint is MockDSC {
+    constructor(address initialOwner) MockDSC(initialOwner) {}
+
+    function mint(address _to, uint256 _amount) public onlyOwner returns (bool) {
         if (_to == address(0)) {
             revert DecentralizedStableCoin__NotZeroAddress();
         }
@@ -30,6 +33,35 @@ contract MockFailedMintDSC is ERC20Burnable, Ownable {
             revert DecentralizedStableCoin__AmountMustBeMoreThanZero();
         }
         _mint(_to, _amount);
+        return false;
+    }
+}
+
+contract MockDSCFailedTransfer is MockDSC {
+    constructor(address initialOwner) MockDSC(initialOwner) {}
+
+    function mint(address account, uint256 amount) public onlyOwner {
+        _mint(account, amount);
+    }
+
+    function transfer(address, /*recipient*/ uint256 /*amount*/ ) public pure override returns (bool) {
+        return false;
+    }
+}
+
+contract MockDSCFailedTransferFrom is MockDSC {
+    constructor(address initialOwner) MockDSC(initialOwner) {}
+
+    function mint(address account, uint256 amount) public onlyOwner {
+        _mint(account, amount);
+    }
+
+    function transferFrom(address, /*sender*/ address, /*recipient*/ uint256 /*amount*/ )
+        public
+        pure
+        override
+        returns (bool)
+    {
         return false;
     }
 }

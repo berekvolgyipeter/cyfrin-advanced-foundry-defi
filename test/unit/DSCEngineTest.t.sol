@@ -4,9 +4,7 @@ pragma solidity ^0.8.27;
 import {Test, console2} from "forge-std/Test.sol";
 import {ERC20Mock} from "chainlink/vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
 import {MockV3Aggregator} from "chainlink/tests/MockV3Aggregator.sol";
-import {MockFailedMintDSC} from "test/mocks/MockFailedMintDSC.sol";
-import {MockFailedTransfer} from "test/mocks/MockFailedTransfer.sol";
-import {MockFailedTransferFrom} from "test/mocks/MockFailedTransferFrom.sol";
+import {MockDSCFailedMint, MockDSCFailedTransfer, MockDSCFailedTransferFrom} from "test/mocks/MockDSC.sol";
 import {DeployDSC} from "script/DeployDSC.s.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
 import {DSCEngine} from "src/DSCEngine.sol";
@@ -144,7 +142,7 @@ contract DepositCollateralTest is DSCEngineTest {
         // Arrange - Setup
         address owner = msg.sender;
         vm.startPrank(owner);
-        MockFailedTransferFrom mockDsc = new MockFailedTransferFrom(owner);
+        MockDSCFailedTransferFrom mockDsc = new MockDSCFailedTransferFrom(owner);
         tokenAddresses = [address(mockDsc)];
         feedAddresses = [cfg.wethUsdPriceFeed];
         DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
@@ -199,7 +197,7 @@ contract MintDscTest is DSCEngineTest {
         feedAddresses = [cfg.wethUsdPriceFeed];
         address owner = msg.sender;
         vm.startPrank(owner);
-        MockFailedMintDSC mockDsc = new MockFailedMintDSC(owner);
+        MockDSCFailedMint mockDsc = new MockDSCFailedMint(owner);
         DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
         mockDsc.transferOwnership(address(mockDsce));
         vm.stopPrank();
@@ -296,7 +294,7 @@ contract RedeemCollateralTest is DSCEngineTest {
         // Arrange - Setup
         address owner = msg.sender;
         vm.startPrank(owner);
-        MockFailedTransfer mockDsc = new MockFailedTransfer(owner);
+        MockDSCFailedTransfer mockDsc = new MockDSCFailedTransfer(owner);
         tokenAddresses = [address(mockDsc)];
         feedAddresses = [cfg.wethUsdPriceFeed];
         DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
