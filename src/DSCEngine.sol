@@ -138,7 +138,6 @@ contract DSCEngine is ReentrancyGuard {
      */
     function burnDsc(uint256 amount) external moreThanZero(amount) {
         _burnDsc(amount, msg.sender, msg.sender);
-        revertIfHealthFactorIsBroken(msg.sender); // I don't think this would ever hit...
     }
 
     /**
