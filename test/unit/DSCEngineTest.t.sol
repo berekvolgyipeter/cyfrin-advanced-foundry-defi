@@ -336,6 +336,17 @@ contract BurnDscTest is DSCEngineTest {
         dsce.burnDsc(0);
     }
 
+    function testRevertsIfDscTransferFromFails() public {
+        (DSCEngine mockDsce, MockDSCFailedTransferFrom mockDsc) = setUpDscTransferFromFailed();
+        depositCollateralAndMintDsc(address(cfg.weth), mockDsce);
+
+        vm.startPrank(user);
+        mockDsc.approve(address(mockDsce), amountToMint);
+        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        mockDsce.burnDsc(amountToMint);
+        vm.stopPrank();
+    }
+
     function testCantBurnMoreThanUserHas() public {
         vm.expectRevert();
         vm.prank(user);
