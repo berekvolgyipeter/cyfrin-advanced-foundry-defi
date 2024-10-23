@@ -55,6 +55,21 @@ abstract contract DSCEngineTest is Test {
 }
 
 contract ConstructorTest is DSCEngineTest {
+    function testConstructor() public {
+        tokenAddresses = [cfg.weth, cfg.wbtc];
+        feedAddresses = [cfg.wethUsdPriceFeed, cfg.wbtcUsdPriceFeed];
+
+        DSCEngine newDsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        address[] memory collateralTokens = newDsce.getCollateralTokens();
+
+        assertEq(collateralTokens.length, tokenAddresses.length);
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            assertEq(collateralTokens[i], tokenAddresses[i]);
+            assertEq(newDsce.getCollateralTokenPriceFeed(tokenAddresses[i]), feedAddresses[i]);
+        }
+        assertEq(newDsce.getDsc(), address(dsc));
+    }
+
     function testRevertsIfTokenLengthDoesntMatchPriceFeeds() public {
         tokenAddresses.push(cfg.weth);
         feedAddresses.push(cfg.wethUsdPriceFeed);
