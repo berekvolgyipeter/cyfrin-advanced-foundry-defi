@@ -38,35 +38,19 @@ abstract contract DSCEngineTest is Test {
         ERC20Mock(cfg.weth).mint(user, STARTING_ERC20_BALANCE);
     }
 
-    function setUpDscMintFailed() public returns (DSCEngine) {
+    function setUpDscMintFailed() public {
         tokenAddresses = [cfg.weth];
         feedAddresses = [cfg.wethUsdPriceFeed];
         address owner = msg.sender;
 
         vm.startPrank(owner);
         MockDSCFailedMint mockDsc = new MockDSCFailedMint(owner);
-        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
-        mockDsc.transferOwnership(address(mockDsce));
+        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        mockDsc.transferOwnership(address(dsce));
         vm.stopPrank();
-
-        return mockDsce;
     }
 
-    function setUpDscTransferFailed() public returns (DSCEngine, MockDSCFailedTransfer) {
-        address owner = msg.sender;
-
-        vm.startPrank(owner);
-        MockDSCFailedTransfer mockDsc = new MockDSCFailedTransfer(owner);
-        tokenAddresses = [cfg.weth];
-        feedAddresses = [cfg.wethUsdPriceFeed];
-        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
-        mockDsc.transferOwnership(address(mockDsce));
-        vm.stopPrank();
-
-        return (mockDsce, mockDsc);
-    }
-
-    function setUpCollateralTransferFailed() public returns (DSCEngine, MockDSCFailedTransfer) {
+    function setUpCollateralTransferFailed() public returns (MockDSCFailedTransfer) {
         address owner = msg.sender;
 
         vm.startPrank(owner);
@@ -74,41 +58,41 @@ abstract contract DSCEngineTest is Test {
         MockDSCFailedTransfer mockWeth = new MockDSCFailedTransfer(owner);
         tokenAddresses = [address(mockWeth)];
         feedAddresses = [cfg.wethUsdPriceFeed];
-        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
         mockWeth.mint(user, STARTING_ERC20_BALANCE);
-        dsc.transferOwnership(address(mockDsce));
+        dsc.transferOwnership(address(dsce));
         vm.stopPrank();
 
-        return (mockDsce, mockWeth);
+        return mockWeth;
     }
 
-    function setUpDscTransferFromFailed() public returns (DSCEngine, MockDSCFailedTransferFrom) {
+    function setUpDscTransferFromFailed() public returns (MockDSCFailedTransferFrom) {
         address owner = msg.sender;
         vm.startPrank(owner);
         MockDSCFailedTransferFrom mockDsc = new MockDSCFailedTransferFrom(owner);
         tokenAddresses = [cfg.weth];
         feedAddresses = [cfg.wethUsdPriceFeed];
-        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
         mockDsc.mint(user, amountCollateral);
-        mockDsc.transferOwnership(address(mockDsce));
+        mockDsc.transferOwnership(address(dsce));
         vm.stopPrank();
 
-        return (mockDsce, mockDsc);
+        return mockDsc;
     }
 
-    function setUpCollateralTransferFromFailed() public returns (DSCEngine, MockDSCFailedTransferFrom) {
+    function setUpCollateralTransferFromFailed() public returns (MockDSCFailedTransferFrom) {
         address owner = msg.sender;
         vm.startPrank(owner);
         dsc = new DecentralizedStableCoin(owner);
         MockDSCFailedTransferFrom mockWeth = new MockDSCFailedTransferFrom(owner);
         tokenAddresses = [address(mockWeth)];
         feedAddresses = [cfg.wethUsdPriceFeed];
-        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
         mockWeth.mint(user, STARTING_ERC20_BALANCE);
-        dsc.transferOwnership(address(mockDsce));
+        dsc.transferOwnership(address(dsce));
         vm.stopPrank();
 
-        return (mockDsce, mockWeth);
+        return mockWeth;
     }
 
     function amountToMint100PercentCollateralized() public view returns (uint256) {
@@ -116,37 +100,33 @@ abstract contract DSCEngineTest is Test {
         return (amountCollateral * (uint256(price) * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
     }
 
-    function depositCollateral(address _token, DSCEngine _dsce) public {
+    function depositCollateral(address _token) public {
         vm.startPrank(user);
-        ERC20Mock(_token).approve(address(_dsce), amountCollateral);
-        _dsce.depositCollateral(_token, amountCollateral);
+        ERC20Mock(_token).approve(address(dsce), amountCollateral);
+        dsce.depositCollateral(_token, amountCollateral);
         vm.stopPrank();
     }
 
-    function mintDsc(DSCEngine _dsce) public {
-        vm.prank(user);
-        _dsce.mintDsc(amountToMint);
-    }
-
-    function depositCollateralAndMintDsc(address _token, DSCEngine _dsce) public {
+    function depositCollateralAndMintDsc(address _token) public {
         vm.startPrank(user);
-        ERC20Mock(_token).approve(address(_dsce), amountCollateral);
-        _dsce.depositCollateralAndMintDsc(_token, amountCollateral, amountToMint);
+        ERC20Mock(_token).approve(address(dsce), amountCollateral);
+        dsce.depositCollateralAndMintDsc(_token, amountCollateral, amountToMint);
         vm.stopPrank();
     }
 
     modifier depositedCollateral() {
-        depositCollateral(cfg.weth, dsce);
+        depositCollateral(cfg.weth);
         _;
     }
 
     modifier mintedDsc() {
-        mintDsc(dsce);
+        vm.prank(user);
+        dsce.mintDsc(amountToMint);
         _;
     }
 
     modifier depositedCollateralAndMintedDsc() {
-        depositCollateralAndMintDsc(cfg.weth, dsce);
+        depositCollateralAndMintDsc(cfg.weth);
         _;
     }
 }
@@ -251,14 +231,14 @@ contract DepositCollateralTest is DSCEngineTest {
     }
 
     function testRevertsIfCollateralTransferFromFails() public {
-        (DSCEngine mockDsce, MockDSCFailedTransferFrom mockWeth) = setUpCollateralTransferFromFailed();
+        MockDSCFailedTransferFrom mockWeth = setUpCollateralTransferFromFailed();
 
         vm.prank(user);
-        ERC20Mock(address(mockWeth)).approve(address(mockDsce), amountCollateral);
+        ERC20Mock(address(mockWeth)).approve(address(dsce), amountCollateral);
 
         vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
         vm.prank(user);
-        mockDsce.depositCollateral(address(mockWeth), amountCollateral);
+        dsce.depositCollateral(address(mockWeth), amountCollateral);
     }
 
     function testCanDepositCollateral() public {
@@ -295,12 +275,12 @@ contract MintDscTest is DSCEngineTest {
     }
 
     function testRevertsIfMintFails() public {
-        DSCEngine mockDsce = setUpDscMintFailed();
-        depositCollateral(cfg.weth, mockDsce);
+        setUpDscMintFailed();
+        depositCollateral(cfg.weth);
 
         vm.expectRevert(DSCEngine.DSCEngine__MintFailed.selector);
         vm.prank(user);
-        mockDsce.mintDsc(amountToMint);
+        dsce.mintDsc(amountToMint);
     }
 
     function testRevertsIfMintAmountBreaksHealthFactor() public depositedCollateral {
@@ -337,13 +317,13 @@ contract BurnDscTest is DSCEngineTest {
     }
 
     function testRevertsIfDscTransferFromFails() public {
-        (DSCEngine mockDsce, MockDSCFailedTransferFrom mockDsc) = setUpDscTransferFromFailed();
-        depositCollateralAndMintDsc(address(cfg.weth), mockDsce);
+        MockDSCFailedTransferFrom mockDsc = setUpDscTransferFromFailed();
+        depositCollateralAndMintDsc(address(cfg.weth));
 
         vm.startPrank(user);
-        mockDsc.approve(address(mockDsce), amountToMint);
+        mockDsc.approve(address(dsce), amountToMint);
         vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
-        mockDsce.burnDsc(amountToMint);
+        dsce.burnDsc(amountToMint);
         vm.stopPrank();
     }
 
@@ -383,12 +363,12 @@ contract RedeemCollateralTest is DSCEngineTest {
     }
 
     function testRevertsIfCollateralTransferFails() public {
-        (DSCEngine mockDsce, MockDSCFailedTransfer mockWeth) = setUpCollateralTransferFailed();
-        depositCollateral(address(mockWeth), mockDsce);
+        MockDSCFailedTransfer mockWeth = setUpCollateralTransferFailed();
+        depositCollateral(address(mockWeth));
 
         vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
         vm.prank(user);
-        mockDsce.redeemCollateral(address(mockWeth), amountCollateral);
+        dsce.redeemCollateral(address(mockWeth), amountCollateral);
     }
 
     function testRevertsIfHealthFactorIsBroken() public depositedCollateral mintedDsc {
@@ -431,24 +411,24 @@ contract DepositCollateralAndMintDscTest is DSCEngineTest {
     }
 
     function testRevertsIfMintFails() public {
-        DSCEngine mockDsce = setUpDscMintFailed();
+        setUpDscMintFailed();
 
         vm.startPrank(user);
-        ERC20Mock(cfg.weth).approve(address(mockDsce), amountCollateral);
+        ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
         vm.expectRevert(DSCEngine.DSCEngine__MintFailed.selector);
-        mockDsce.depositCollateralAndMintDsc(cfg.weth, amountCollateral, amountToMint);
+        dsce.depositCollateralAndMintDsc(cfg.weth, amountCollateral, amountToMint);
         vm.stopPrank();
     }
 
     function testRevertsIfCollateralTransferFromFails() public {
-        (DSCEngine mockDsce, MockDSCFailedTransferFrom mockWeth) = setUpCollateralTransferFromFailed();
+        MockDSCFailedTransferFrom mockWeth = setUpCollateralTransferFromFailed();
 
         vm.prank(user);
-        ERC20Mock(address(mockWeth)).approve(address(mockDsce), amountCollateral);
+        ERC20Mock(address(mockWeth)).approve(address(dsce), amountCollateral);
 
         vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
         vm.prank(user);
-        mockDsce.depositCollateralAndMintDsc(address(mockWeth), amountCollateral, amountToMint);
+        dsce.depositCollateralAndMintDsc(address(mockWeth), amountCollateral, amountToMint);
     }
 
     function testRevertsIfMintAmountBreaksHealthFactor() public {
