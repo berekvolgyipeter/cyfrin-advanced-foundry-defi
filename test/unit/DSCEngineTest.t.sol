@@ -114,6 +114,13 @@ abstract contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    function redeemCollateralForDsc(address _token, uint256 amountRedeem, uint256 amountBurn) public {
+        vm.startPrank(user);
+        dsc.approve(address(dsce), amountToMint);
+        dsce.redeemCollateralForDsc(_token, amountRedeem, amountBurn);
+        vm.stopPrank();
+    }
+
     modifier depositedCollateral() {
         depositCollateral(cfg.weth);
         _;
@@ -462,5 +469,88 @@ contract DepositCollateralAndMintDscTest is DSCEngineTest {
         uint256 depositedAmount = dsce.getTokenAmountFromUsd(cfg.weth, collateralValueInUsd);
         assertEq(totalDscMinted, amountToMint);
         assertEq(depositedAmount, amountCollateral);
+    }
+}
+
+contract RedeemCollateralForDsc is DSCEngineTest {
+    function testRevertsIfCollateralAmountIsZero() public depositedCollateralAndMintedDsc {
+        vm.startPrank(user);
+        ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dsce.redeemCollateralForDsc(cfg.weth, 0, amountToMint);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfDscAmountIsZero() public depositedCollateralAndMintedDsc {
+        vm.startPrank(user);
+        ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dsce.redeemCollateralForDsc(cfg.weth, amountCollateral, 0);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfNotAllowedToken() public depositedCollateralAndMintedDsc {
+        vm.startPrank(user);
+        ERC20Mock(notAllowedToken).approve(address(dsce), amountCollateral);
+
+        vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__TokenNotAllowed.selector, notAllowedToken));
+        dsce.redeemCollateralForDsc(notAllowedToken, amountCollateral, amountToMint);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfDscTransferFromFails() public {
+        MockDSCFailedTransferFrom mockDsc = setUpDscTransferFromFailed();
+        depositCollateralAndMintDsc(address(cfg.weth));
+
+        vm.startPrank(user);
+        mockDsc.approve(address(dsce), amountToMint);
+        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        dsce.redeemCollateralForDsc(cfg.weth, amountCollateral, amountToMint);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfCollateralTransferFails() public {
+        MockDSCFailedTransfer mockWeth = setUpCollateralTransferFailed();
+        depositCollateralAndMintDsc(address(mockWeth));
+
+        vm.startPrank(user);
+        dsc.approve(address(dsce), amountToMint);
+        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        dsce.redeemCollateralForDsc(address(mockWeth), amountCollateral, amountToMint);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfHealthFactorIsBroken() public depositedCollateralAndMintedDsc {
+        uint256 amountDscToBurn = amountToMint / 2;
+        uint256 amountCollateralToRedeem = amountCollateral;
+        uint256 expectedHealthFactor = 0;
+
+        vm.startPrank(user);
+        dsc.approve(address(dsce), amountDscToBurn);
+        vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
+        dsce.redeemCollateralForDsc(cfg.weth, amountCollateralToRedeem, amountDscToBurn);
+        vm.stopPrank();
+    }
+
+    function testCanRedeemDepositedCollateral() public depositedCollateralAndMintedDsc {
+        uint256 amountRedeem = amountCollateral / 4;
+        uint256 amountBurn = amountToMint / 2;
+
+        redeemCollateralForDsc(cfg.weth, amountRedeem, amountBurn);
+
+        assertEq(dsc.balanceOf(user), amountToMint - amountBurn);
+        assertEq(dsce.getCollateralBalanceOfUser(user, cfg.weth), amountCollateral - amountRedeem);
+    }
+
+    function testGetAccountInfo() public depositedCollateralAndMintedDsc {
+        uint256 amountRedeem = amountCollateral / 4;
+        uint256 amountBurn = amountToMint / 2;
+
+        redeemCollateralForDsc(cfg.weth, amountRedeem, amountBurn);
+
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(user);
+        uint256 depositedAmount = dsce.getTokenAmountFromUsd(cfg.weth, collateralValueInUsd);
+        assertEq(totalDscMinted, amountToMint - amountBurn);
+        assertEq(depositedAmount, amountCollateral - amountRedeem);
     }
 }
