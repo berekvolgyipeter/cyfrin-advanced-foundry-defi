@@ -393,6 +393,14 @@ contract RedeemCollateralTest is DSCEngineTest {
 }
 
 contract DepositCollateralAndMintDscTest is DSCEngineTest {
+    function testRevertsIfCollateralAmountIsZero() public {
+        vm.startPrank(user);
+        ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dsce.depositCollateralAndMintDsc(cfg.weth, 0, amountToMint);
+        vm.stopPrank();
+    }
+
     function testRevertsIfMintAmountIsZero() public {
         vm.startPrank(user);
         ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
@@ -431,7 +439,7 @@ contract DepositCollateralAndMintDscTest is DSCEngineTest {
         dsce.depositCollateralAndMintDsc(address(mockWeth), amountCollateral, amountToMint);
     }
 
-    function testRevertsIfMintAmountBreaksHealthFactor() public {
+    function testRevertsIfHealthFactorIsBroken() public {
         amountToMint = amountToMint100PercentCollateralized();
         vm.startPrank(user);
         ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
