@@ -700,3 +700,66 @@ contract LiquidateTest is DSCEngineTest {
         assertEq(userDscBalance, amountToMint);
     }
 }
+
+contract GetterFunctionsTest is DSCEngineTest {
+    function testGetCollateralTokenPriceFeed() public view {
+        assertEq(dsce.getCollateralTokenPriceFeed(cfg.weth), cfg.wethUsdPriceFeed);
+        assertEq(dsce.getCollateralTokenPriceFeed(cfg.wbtc), cfg.wbtcUsdPriceFeed);
+    }
+
+    function testGetCollateralTokens() public view {
+        address[] memory collateralTokens = dsce.getCollateralTokens();
+        assertEq(collateralTokens[0], cfg.weth);
+        assertEq(collateralTokens[1], cfg.wbtc);
+    }
+
+    function testGetMinHealthFactor() public view {
+        uint256 minHealthFactor = dsce.getMinHealthFactor();
+        assertEq(minHealthFactor, MIN_HEALTH_FACTOR);
+    }
+
+    function testGetLiquidationThreshold() public view {
+        uint256 liquidationThreshold = dsce.getLiquidationThreshold();
+        assertEq(liquidationThreshold, LIQUIDATION_THRESHOLD);
+    }
+
+    function testGetAccountCollateralValueFromInformation() public depositedCollateral {
+        (, uint256 collateralValue) = dsce.getAccountInformation(user);
+        uint256 expectedCollateralValue = dsce.getUsdValue(cfg.weth, amountCollateral);
+        assertEq(collateralValue, expectedCollateralValue);
+    }
+
+    function testGetCollateralBalanceOfUser() public {
+        vm.startPrank(user);
+        ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
+        dsce.depositCollateral(cfg.weth, amountCollateral);
+        vm.stopPrank();
+        uint256 collateralBalance = dsce.getCollateralBalanceOfUser(user, cfg.weth);
+        assertEq(collateralBalance, amountCollateral);
+    }
+
+    function testGetAccountCollateralValue() public depositedCollateral {
+        uint256 collateralValue = dsce.getAccountCollateralValue(user);
+        uint256 expectedCollateralValue = dsce.getUsdValue(cfg.weth, amountCollateral);
+        assertEq(collateralValue, expectedCollateralValue);
+    }
+
+    function testGetDsc() public view {
+        address dscAddress = dsce.getDsc();
+        assertEq(dscAddress, address(dsc));
+    }
+
+    function testLiquidationPrecision() public view {
+        uint256 expectedLiquidationPrecision = 100;
+        uint256 actualLiquidationPrecision = dsce.getLiquidationPrecision();
+        assertEq(actualLiquidationPrecision, expectedLiquidationPrecision);
+    }
+
+    function testGetPrecision() public view {
+        assertEq(dsce.getPrecision(), PRECISION);
+    }
+
+    function testGetAdditionalFeedPrecision() public view {
+        assertEq(dsce.getAdditionalFeedPrecision(), ADDITIONAL_FEED_PRECISION);
+    }
+}
