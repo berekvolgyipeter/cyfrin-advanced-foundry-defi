@@ -3,6 +3,7 @@ pragma solidity 0.8.27;
 
 import {ERC20Burnable, ERC20} from "openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
+import {MockV3Aggregator} from "chainlink/tests/MockV3Aggregator.sol";
 
 contract MockDSC is ERC20Burnable, Ownable {
     error DecentralizedStableCoin__AmountMustBeMoreThanZero();
@@ -11,7 +12,7 @@ contract MockDSC is ERC20Burnable, Ownable {
 
     constructor(address initialOwner) ERC20("DecentralizedStableCoin", "DSC") Ownable(initialOwner) {}
 
-    function burn(uint256 _amount) public override onlyOwner {
+    function burn(uint256 _amount) public virtual override onlyOwner {
         if (_amount <= 0) {
             revert DecentralizedStableCoin__AmountMustBeMoreThanZero();
         }
@@ -60,5 +61,18 @@ contract MockDSCFailedTransferFrom is MockDSC {
         returns (bool)
     {
         return false;
+    }
+}
+
+contract MockDSCCrashPriceDuringBurn is MockDSC {
+    address mockAggregator;
+
+    constructor(address _mockAggregator, address initialOwner) MockDSC(initialOwner) {
+        mockAggregator = _mockAggregator;
+    }
+
+    function burn(uint256 _amount) public virtual override onlyOwner {
+        MockV3Aggregator(mockAggregator).updateAnswer(0);
+        super.burn(_amount);
     }
 }
