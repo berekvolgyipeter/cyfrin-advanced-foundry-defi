@@ -738,6 +738,12 @@ contract GetterFunctionsTest is DSCEngineTest {
         assertEq(collateralBalance, amountCollateral);
     }
 
+    function testGetCollateralValueInUsd() public depositedCollateral {
+        uint256 collateralValue = dsce.getCollateralValueInUsd(user, cfg.weth);
+        uint256 expectedCollateralValue = dsce.getUsdValue(cfg.weth, amountCollateral);
+        assertEq(collateralValue, expectedCollateralValue);
+    }
+
     function testGetTotalCollateralValueInUsd() public depositedCollateral {
         uint256 totalCollateralValueInUsd = dsce.getTotalCollateralValueInUsd(user);
         uint256 expectedCollateralValue = dsce.getUsdValue(cfg.weth, amountCollateral);
