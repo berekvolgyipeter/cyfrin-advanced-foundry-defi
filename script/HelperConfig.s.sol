@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Script} from "forge-std/Script.sol";
-import {MockV3Aggregator} from "chainlink/tests/MockV3Aggregator.sol";
-import {ERC20Mock} from "chainlink/vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import { Script } from "forge-std/Script.sol";
+import { MockV3Aggregator } from "chainlink/tests/MockV3Aggregator.sol";
+import { ERC20Mock } from "chainlink/vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
 
 contract HelperConfig is Script {
     NetworkConfig public networkConfig;
 
     uint8 public constant DECIMALS = 8;
     int256 public constant ETH_USD_PRICE = 2000e8;
-    int256 public constant BTC_USD_PRICE = 60000e8;
+    int256 public constant BTC_USD_PRICE = 60_000e8;
 
     struct NetworkConfig {
         address wethUsdPriceFeed;

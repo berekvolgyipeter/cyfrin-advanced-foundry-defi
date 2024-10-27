@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.27;
 
-import {Test, console2} from "forge-std/Test.sol";
-import {DecentralizedStableCoin} from "src/DecentralizedStableCoin.sol";
+import { Test, console2 } from "forge-std/Test.sol";
+import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
 
 contract DecentralizedStablecoinTest is Test {
     address owner = makeAddr("owner");
