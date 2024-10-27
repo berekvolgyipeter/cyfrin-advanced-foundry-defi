@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Test, console2} from "forge-std/Test.sol";
-import {ERC20Mock} from "chainlink/vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
-import {MockV3Aggregator} from "chainlink/tests/MockV3Aggregator.sol";
+import { Test } from "forge-std/Test.sol";
+import { ERC20Mock } from "chainlink/vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import { MockV3Aggregator } from "chainlink/tests/MockV3Aggregator.sol";
 import {
     MockDSCFailedMint,
     MockDSCFailedTransfer,
     MockDSCFailedTransferFrom,
     MockDSCCrashPriceDuringBurn
 } from "test/mocks/MockDSC.sol";
-import {DeployDSC} from "script/DeployDSC.s.sol";
-import {HelperConfig} from "script/HelperConfig.s.sol";
-import {DSCEngine} from "src/DSCEngine.sol";
-import {DecentralizedStableCoin} from "src/DecentralizedStableCoin.sol";
+import { DeployDSC } from "script/DeployDSC.s.sol";
+import { HelperConfig } from "script/HelperConfig.s.sol";
+import { DSCEngine } from "src/DSCEngine.sol";
+import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
 
 abstract contract DSCEngineTest is Test {
     event CollateralDeposited(address indexed user, address indexed token, uint256 amount);
@@ -32,7 +32,7 @@ abstract contract DSCEngineTest is Test {
     int256 public constant ETH_USD_PLUMMETED_PRICE = int256(18 * FEED_PRECISION);
     uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
     uint256 public constant MIN_HEALTH_FACTOR = 1e18;
-    uint256 public constant LIQUIDATION_THRESHOLD = 50;
+    uint256 public constant LIQUIDATION_THRESHOLD = 200;
 
     address public user = makeAddr("user");
     uint256 public amountCollateral = 10 ether;
@@ -280,8 +280,8 @@ contract DepositCollateralTest is DSCEngineTest {
         dsce.depositCollateral(cfg.weth, amountCollateral);
         vm.stopPrank();
 
-        assertEq(dsce.getCollateralBalanceOfUser(user, cfg.weth), amountCollateral);
-        assertEq(dsce.getCollateralBalanceOfUser(user, cfg.wbtc), 0);
+        assertEq(dsce.getCollateralBalance(user, cfg.weth), amountCollateral);
+        assertEq(dsce.getCollateralBalance(user, cfg.wbtc), 0);
     }
 
     function testCanDepositCollateralWithoutMinting() public depositedCollateral {
@@ -483,8 +483,8 @@ contract DepositCollateralAndMintDscTest is DSCEngineTest {
 
     function testCanMintWithDepositedCollateral() public depositedCollateralAndMintedDsc {
         assertEq(dsc.balanceOf(user), amountToMint);
-        assertEq(dsce.getCollateralBalanceOfUser(user, cfg.weth), amountCollateral);
-        assertEq(dsce.getCollateralBalanceOfUser(user, cfg.wbtc), 0);
+        assertEq(dsce.getCollateralBalance(user, cfg.weth), amountCollateral);
+        assertEq(dsce.getCollateralBalance(user, cfg.wbtc), 0);
     }
 
     function testGetAccountInfo() public depositedCollateralAndMintedDsc {
@@ -562,7 +562,7 @@ contract RedeemCollateralForDscTest is DSCEngineTest {
         redeemCollateralForDsc(cfg.weth, amountRedeem, amountBurn);
 
         assertEq(dsc.balanceOf(user), amountToMint - amountBurn);
-        assertEq(dsce.getCollateralBalanceOfUser(user, cfg.weth), amountCollateral - amountRedeem);
+        assertEq(dsce.getCollateralBalance(user, cfg.weth), amountCollateral - amountRedeem);
     }
 
     function testGetAccountInfo() public depositedCollateralAndMintedDsc {
@@ -723,25 +723,25 @@ contract GetterFunctionsTest is DSCEngineTest {
         assertEq(liquidationThreshold, LIQUIDATION_THRESHOLD);
     }
 
-    function testGetAccountCollateralValueFromInformation() public depositedCollateral {
-        (, uint256 collateralValue) = dsce.getAccountInformation(user);
+    function testGetAccountInformation() public depositedCollateral {
+        (, uint256 totalCollateralValueInUsd) = dsce.getAccountInformation(user);
         uint256 expectedCollateralValue = dsce.getUsdValue(cfg.weth, amountCollateral);
-        assertEq(collateralValue, expectedCollateralValue);
+        assertEq(totalCollateralValueInUsd, expectedCollateralValue);
     }
 
-    function testGetCollateralBalanceOfUser() public {
+    function testGetCollateralBalance() public {
         vm.startPrank(user);
         ERC20Mock(cfg.weth).approve(address(dsce), amountCollateral);
         dsce.depositCollateral(cfg.weth, amountCollateral);
         vm.stopPrank();
-        uint256 collateralBalance = dsce.getCollateralBalanceOfUser(user, cfg.weth);
+        uint256 collateralBalance = dsce.getCollateralBalance(user, cfg.weth);
         assertEq(collateralBalance, amountCollateral);
     }
 
-    function testGetAccountCollateralValue() public depositedCollateral {
-        uint256 collateralValue = dsce.getAccountCollateralValue(user);
+    function testGetTotalCollateralValueInUsd() public depositedCollateral {
+        uint256 totalCollateralValueInUsd = dsce.getTotalCollateralValueInUsd(user);
         uint256 expectedCollateralValue = dsce.getUsdValue(cfg.weth, amountCollateral);
-        assertEq(collateralValue, expectedCollateralValue);
+        assertEq(totalCollateralValueInUsd, expectedCollateralValue);
     }
 
     function testGetDsc() public view {
