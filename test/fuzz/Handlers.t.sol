@@ -96,6 +96,11 @@ abstract contract BaseHandler is Test {
         return userToBeLiquidated;
     }
 
+    function boundSilent(uint256 x, uint256 min, uint256 max) internal pure returns (uint256 result) {
+        return _bound(x, min, max);
+    }
+
+    /* ==================== PUBLIC HELPER FUNCTIONS ======================================== */
     function getUsersWithCollateral() public view returns (address[] memory) {
         uint256 numUsers = usersWithCollateral.length();
         address[] memory users = new address[](numUsers);
@@ -105,10 +110,6 @@ abstract contract BaseHandler is Test {
         }
 
         return users;
-    }
-
-    function boundSilent(uint256 x, uint256 min, uint256 max) internal pure returns (uint256 result) {
-        return _bound(x, min, max);
     }
 
     function logSummary() public view virtual {

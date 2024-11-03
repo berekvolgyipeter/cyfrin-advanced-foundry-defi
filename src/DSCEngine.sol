@@ -5,6 +5,7 @@ import { AggregatorV3Interface } from "chainlink/shared/interfaces/AggregatorV3I
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "openzeppelin/utils/ReentrancyGuard.sol";
 import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
+import { OracleLib } from "src/libraries/OracleLib.sol";
 
 /**
  * @title DSCEngine
@@ -34,6 +35,9 @@ contract DSCEngine is ReentrancyGuard {
     error DSCEngine__BreaksHealthFactor(uint256 healthFactorValue);
     error DSCEngine__HealthFactorOk();
     error DSCEngine__HealthFactorNotImproved();
+
+    /* ==================== TYPES ============================================================ */
+    using OracleLib for AggregatorV3Interface;
 
     /* ==================== STATE VARIABLES ============================================================ */
     DecentralizedStableCoin private immutable i_dsc;
@@ -267,7 +271,7 @@ contract DSCEngine is ReentrancyGuard {
     /* ==================== PRIVATE & INTERNAL VIEW & PURE FUNCTIONS ======================================== */
     function _getUsdValue(address token, uint256 amount) private view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
-        (, int256 price,,,) = priceFeed.latestRoundData();
+        (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
         // The returned value from Chainlink will be in 1e8 precision
         // Most USD pairs have 8 decimals, so we will just pretend they all do
         // We want to have everything in terms of WEI, so we multiply be 1e10
@@ -322,7 +326,7 @@ contract DSCEngine is ReentrancyGuard {
 
     function getTokenAmountFromUsd(address token, uint256 usdAmount) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
-        (, int256 price,,,) = priceFeed.latestRoundData();
+        (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
         return ((usdAmount * PRECISION) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
     }
 
