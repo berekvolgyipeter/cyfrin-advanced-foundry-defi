@@ -24,6 +24,11 @@ remappings_regenerate = false
 [fuzz]
 runs = 256
 
+[invariant]
+runs = 128
+depth = 128
+fail_on_revert = false
+
 [fmt]
 bracket_spacing = true
 int_types = "long"
