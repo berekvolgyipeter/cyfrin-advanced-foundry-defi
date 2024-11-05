@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   push:
@@ -13,11 +13,11 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  build_and_test:
+  test:
     strategy:
       fail-fast: true
 
-    name: Foundry project
+    name: Test Foundry project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -50,16 +50,3 @@ jobs:
         run: |
           forge test -vvv
         id: test
-
-  analyze:
-    name: Static analysis
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Run Slither
-      uses: crytic/slither-action@v0.4.0
-      id: slither
-      with:
-        slither-args: --config-file slither.config.json

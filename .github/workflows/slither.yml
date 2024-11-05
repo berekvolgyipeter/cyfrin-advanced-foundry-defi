@@ -1,0 +1,24 @@
+name: Slither
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Slither
+      uses: crytic/slither-action@v0.4.0
+      id: slither
+      with:
+        slither-args: --config-file slither.config.json
