@@ -2,6 +2,8 @@
 
 This is a section of the [Cyfrin Foundry Solidity Course](https://github.com/Cyfrin/foundry-full-course-cu?tab=readme-ov-file#advanced-foundry-section-3-foundry-defi--stablecoin-the-pinnacle-project-get-here).
 
+The audit on the [original codebase](https://github.com/Cyfrin/foundry-defi-stablecoin-cu) can be checked [here](https://github.com/Cyfrin/foundry-defi-stablecoin-cu/blob/main/audits/codehawks-08-05-2023.md).
+
 ## Stabeloin properties
 
 1. Relative Stability: Achored or Pegged to the US Dollar

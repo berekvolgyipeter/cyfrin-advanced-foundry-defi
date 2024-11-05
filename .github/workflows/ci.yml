@@ -2,6 +2,10 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
+      - release
+      - develop
   pull_request:
   workflow_dispatch:
 
@@ -9,16 +13,15 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  build_and_test:
     strategy:
       fail-fast: true
 
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -47,3 +50,16 @@ jobs:
         run: |
           forge test -vvv
         id: test
+
+  analyze:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Slither
+      uses: crytic/slither-action@v0.4.0
+      id: slither
+      with:
+        slither-args: --config-file slither.config.json

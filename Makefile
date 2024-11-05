@@ -28,6 +28,10 @@ snapshot :; forge snapshot
 
 format-check :; forge fmt --check
 
+slither-install :; python3 -m pip install slither-analyzer
+
+slither :; slither . --config-file slither.config.json --checklist
+
 anvil :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 1
 
 check-etherscan-api:
