@@ -1,5 +1,8 @@
 name: Slither
 
+env:
+  FOUNDRY_PROFILE: default
+
 on:
   push:
     branches:
