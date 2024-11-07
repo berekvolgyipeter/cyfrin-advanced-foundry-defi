@@ -17,21 +17,8 @@ jobs:
     name: Static analysis
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install dependencies
-        run: |
-          make install
-
-      - name: Show Forge version
-        run: |
-          forge --version
+      - name: Run Reusable Setup Workflow
+        uses: ./.github/workflows/setup.yml
 
       - name: Run Slither
         uses: crytic/slither-action@v0.4.0
