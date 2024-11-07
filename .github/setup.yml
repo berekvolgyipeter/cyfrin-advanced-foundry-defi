@@ -4,9 +4,6 @@ description: "Set up Foundry and dependencies"
 runs:
   using: "composite"
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
       with:
