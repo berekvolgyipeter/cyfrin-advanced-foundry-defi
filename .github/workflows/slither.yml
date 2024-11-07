@@ -17,13 +17,23 @@ jobs:
     name: Static analysis
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Foundry environment
-      uses: ./action.yml
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
-    - name: Run Slither
-      uses: crytic/slither-action@v0.4.0
-      with:
-        slither-args: --config-file slither.config.json
+      - name: Install dependencies
+        run: |
+          make install
+
+      - name: Show Forge version
+        run: |
+          forge --version
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.4.0
+        with:
+          slither-args: --config-file slither.config.json
