@@ -9,16 +9,31 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  FOUNDRY_PROFILE: default
+
 jobs:
   analyze:
     name: Static analysis
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Run Slither
-      uses: crytic/slither-action@v0.4.0
-      id: slither
-      with:
-        slither-args: --config-file slither.config.json
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: |
+          make install
+
+      - name: Show Forge version
+        run: |
+          forge --version
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.4.0
+        with:
+          slither-args: --config-file slither.config.json

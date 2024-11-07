@@ -111,6 +111,8 @@ contract DSCEngine is ReentrancyGuard {
      * @param amountDscToBurn: The amount of DSC you want to burn
      * @notice This function will withdraw your collateral and burn DSC in one transaction
      */
+    // nonReentrant modifier is used
+    // slither-disable-next-line reentrancy-events
     function redeemCollateralForDsc(
         address tokenCollateralAddress,
         uint256 amountCollateral,
@@ -119,6 +121,7 @@ contract DSCEngine is ReentrancyGuard {
         external
         moreThanZero(amountCollateral)
         moreThanZero(amountDscToBurn)
+        nonReentrant
         isAllowedToken(tokenCollateralAddress)
     {
         _burnDsc(amountDscToBurn, msg.sender, msg.sender);
@@ -173,6 +176,8 @@ contract DSCEngine is ReentrancyGuard {
      * TODO implement a feature to liquidate in the event the protocol is insolvent
      * and sweep extra amounts into a treasury
      */
+    // nonReentrant modifier is used
+    // slither-disable-next-line reentrancy-no-eth
     function liquidate(
         address tokenCollateralAddress,
         address user,
@@ -236,7 +241,7 @@ contract DSCEngine is ReentrancyGuard {
         revertIfHealthFactorIsBroken(msg.sender);
         bool minted = i_dsc.mint(msg.sender, amountDscToMint);
 
-        if (minted != true) {
+        if (!minted) {
             revert DSCEngine__MintFailed();
         }
     }
@@ -271,6 +276,8 @@ contract DSCEngine is ReentrancyGuard {
     /* ==================== PRIVATE & INTERNAL VIEW & PURE FUNCTIONS ======================================== */
     function _getUsdValue(address token, uint256 amount) private view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        // we use only the return value we are interested in
+        // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
         // The returned value from Chainlink will be in 1e8 precision
         // Most USD pairs have 8 decimals, so we will just pretend they all do
@@ -300,6 +307,8 @@ contract DSCEngine is ReentrancyGuard {
         }
         uint256 collateralAdjustedForThreshold =
             (totalCollateralValueInUsd * LIQUIDATION_PRECISION) / LIQUIDATION_THRESHOLD;
+        // the divided value was previously multplied by a precision variable
+        // slither-disable-next-line divide-before-multiply
         return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
     }
 
@@ -317,7 +326,8 @@ contract DSCEngine is ReentrancyGuard {
 
     /* ==================== PUBLIC & EXTERNAL VIEW & PURE FUNCTIONS ======================================== */
     function getTotalCollateralValueInUsd(address user) public view returns (uint256 totalCollateralValueInUsd) {
-        for (uint256 index = 0; index < s_collateralTokens.length; index++) {
+        uint256 collateralTokensLength = s_collateralTokens.length;
+        for (uint256 index = 0; index < collateralTokensLength; index++) {
             address token = s_collateralTokens[index];
             uint256 amount = s_collateralDeposited[user][token];
             totalCollateralValueInUsd += _getUsdValue(token, amount);
@@ -326,6 +336,8 @@ contract DSCEngine is ReentrancyGuard {
 
     function getTokenAmountFromUsd(address token, uint256 usdAmount) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        // we use only the return value we are interested in
+        // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
         return ((usdAmount * PRECISION) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
     }
