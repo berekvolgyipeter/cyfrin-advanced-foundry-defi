@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup
-      uses: ./.github/workflows/setup.yml
+      uses: ./.github/actions/setup.yml
 
     - name: Run Slither
       uses: crytic/slither-action@v0.4.0
