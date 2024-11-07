@@ -19,6 +19,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        make install
 
     - name: Run Slither
       uses: crytic/slither-action@v0.4.0
