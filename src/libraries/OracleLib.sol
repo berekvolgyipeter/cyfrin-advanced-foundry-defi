@@ -21,6 +21,8 @@ library OracleLib {
         view
         returns (uint80, int256, uint256, uint256, uint80)
     {
+        // called in a loop purposefully to get the total collateral value in USD
+        // slither-disable-next-line calls-loop
         (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
             chainlinkFeed.latestRoundData();
 
@@ -28,6 +30,8 @@ library OracleLib {
             revert OracleLib__StalePrice();
         }
         uint256 secondsSince = block.timestamp - updatedAt;
+        // block.timestamp is used for the purpose of time-based logic and it's safe in this context
+        // slither-disable-next-line timestamp
         if (secondsSince > TIMEOUT) revert OracleLib__StalePrice();
 
         return (roundId, answer, startedAt, updatedAt, answeredInRound);
