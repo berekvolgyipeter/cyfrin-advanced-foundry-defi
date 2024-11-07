@@ -36,4 +36,4 @@ jobs:
       - name: Run Slither
         uses: crytic/slither-action@v0.4.0
         with:
-          slither-args: --config-file slither.config.json --json slither-output.json
+          slither-args: --config-file slither.config.json
