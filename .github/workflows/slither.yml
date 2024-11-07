@@ -17,6 +17,9 @@ jobs:
     name: Static analysis
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
     - name: Setup Foundry environment
       uses: ./action.yml
 
