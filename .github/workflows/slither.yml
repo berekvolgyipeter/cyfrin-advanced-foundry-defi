@@ -1,8 +1,5 @@
 name: Slither
 
-env:
-  FOUNDRY_PROFILE: default
-
 on:
   push:
     branches:
@@ -12,16 +9,16 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  FOUNDRY_PROFILE: default
+
 jobs:
   analyze:
     name: Static analysis
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Foundry and dependencies
-      uses: ./.github/setup.yml
+    - name: Setup Foundry environment
+      uses: ./.github/workflows/reusable-steps/setup.yml
 
     - name: Run Slither
       uses: crytic/slither-action@v0.4.0
