@@ -13,9 +13,11 @@ runs:
         version: nightly
 
     - name: Install dependencies
+      shell: zsh
       run: |
         make install
 
     - name: Show Forge version
+      shell: zsh
       run: |
         forge --version
