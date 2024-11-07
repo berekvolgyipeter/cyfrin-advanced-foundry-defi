@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Foundry environment
-      uses: ./.github/workflows/reusable-steps/setup.yml
+      uses: ./action.yml
 
     - name: Run Slither
       uses: crytic/slither-action@v0.4.0

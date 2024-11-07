@@ -1,0 +1,23 @@
+name: Setup Foundry environment
+description: Install Foundry and project dependencies
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        make install
+
+    - name: Show Forge version
+      shell: bash
+      run: |
+        forge --version
