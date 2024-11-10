@@ -14,7 +14,7 @@ contract DeployDSC is Script {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory cfg = helperConfig.getNetworkConfig();
         tokenAddresses = [cfg.weth, cfg.wbtc];
-        priceFeedAddresses = [cfg.wethUsdPriceFeed, cfg.wbtcUsdPriceFeed];
+        priceFeedAddresses = [cfg.ethUsdPriceFeed, cfg.btcUsdPriceFeed];
 
         vm.startBroadcast(cfg.deployer);
         DecentralizedStableCoin dsc = new DecentralizedStableCoin(cfg.deployer);

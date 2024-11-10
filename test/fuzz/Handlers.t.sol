@@ -15,8 +15,8 @@ abstract contract BaseHandler is Test {
     DSCEngine public dsce;
     DecentralizedStableCoin public dsc;
 
-    MockV3Aggregator public wethUsdPriceFeed;
-    MockV3Aggregator public wbtcUsdPriceFeed;
+    MockV3Aggregator public ethUsdPriceFeed;
+    MockV3Aggregator public btcUsdPriceFeed;
     ERC20Mock public weth;
     ERC20Mock public wbtc;
 
@@ -50,8 +50,8 @@ abstract contract BaseHandler is Test {
         weth = ERC20Mock(collateralTokens[0]);
         wbtc = ERC20Mock(collateralTokens[1]);
 
-        wethUsdPriceFeed = MockV3Aggregator(dsce.getCollateralTokenPriceFeed(address(weth)));
-        wbtcUsdPriceFeed = MockV3Aggregator(dsce.getCollateralTokenPriceFeed(address(wbtc)));
+        ethUsdPriceFeed = MockV3Aggregator(dsce.getCollateralTokenPriceFeed(address(weth)));
+        btcUsdPriceFeed = MockV3Aggregator(dsce.getCollateralTokenPriceFeed(address(wbtc)));
     }
 
     /* ==================== DSCEngine FUNCTIONS ======================================== */

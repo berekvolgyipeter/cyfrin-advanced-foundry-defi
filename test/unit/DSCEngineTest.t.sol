@@ -52,7 +52,7 @@ abstract contract DSCEngineTest is Test {
         cfg = helperConfig.getNetworkConfig();
 
         tokenAddresses = [cfg.weth, cfg.wbtc];
-        feedAddresses = [cfg.wethUsdPriceFeed, cfg.wbtcUsdPriceFeed];
+        feedAddresses = [cfg.ethUsdPriceFeed, cfg.btcUsdPriceFeed];
 
         ERC20Mock(cfg.weth).mint(user, STARTING_ERC20_BALANCE);
         ERC20Mock(cfg.wbtc).mint(user, STARTING_ERC20_BALANCE);
@@ -75,7 +75,7 @@ abstract contract DSCEngineTest is Test {
         dsc = new DecentralizedStableCoin(owner);
         MockDSCFailedTransfer mockWeth = new MockDSCFailedTransfer(owner);
         tokenAddresses = [address(mockWeth)];
-        feedAddresses = [cfg.wethUsdPriceFeed];
+        feedAddresses = [cfg.ethUsdPriceFeed];
         dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
         mockWeth.mint(user, STARTING_ERC20_BALANCE);
         dsc.transferOwnership(address(dsce));
@@ -102,7 +102,7 @@ abstract contract DSCEngineTest is Test {
         dsc = new DecentralizedStableCoin(owner);
         MockDSCFailedTransferFrom mockWeth = new MockDSCFailedTransferFrom(owner);
         tokenAddresses = [address(mockWeth)];
-        feedAddresses = [cfg.wethUsdPriceFeed];
+        feedAddresses = [cfg.ethUsdPriceFeed];
         dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
         mockWeth.mint(user, STARTING_ERC20_BALANCE);
         dsc.transferOwnership(address(dsce));
@@ -112,7 +112,7 @@ abstract contract DSCEngineTest is Test {
     }
 
     function amountToMint100PercentCollateralized() public view returns (uint256) {
-        (, int256 price,,,) = MockV3Aggregator(cfg.wethUsdPriceFeed).latestRoundData();
+        (, int256 price,,,) = MockV3Aggregator(cfg.ethUsdPriceFeed).latestRoundData();
         return (amountCollateral * (uint256(price) * ADDITIONAL_FEED_PRECISION)) / PRECISION;
     }
 
@@ -156,7 +156,7 @@ abstract contract DSCEngineTest is Test {
     modifier liquidated() {
         ERC20Mock(cfg.weth).mint(liquidator, amountCollateralLiquidator);
 
-        MockV3Aggregator(cfg.wethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
+        MockV3Aggregator(cfg.ethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
 
         vm.startPrank(liquidator);
         ERC20Mock(cfg.weth).approve(address(dsce), amountCollateralLiquidator);
@@ -223,7 +223,7 @@ contract HealthFactorTest is DSCEngineTest {
     }
 
     function testHealthFactorCanGoBelowOne() public depositedCollateral mintedDsc {
-        MockV3Aggregator(cfg.wethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
+        MockV3Aggregator(cfg.ethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
 
         uint256 userHealthFactor = dsce.getHealthFactor(user);
         // 180 * 50 (LIQUIDATION_THRESHOLD) / 100 (LIQUIDATION_PRECISION) / 100 (PRECISION)
@@ -599,7 +599,7 @@ contract LiquidateTest is DSCEngineTest {
         // Arrange - Setup
         address owner = msg.sender;
         vm.startPrank(owner);
-        MockDSCCrashPriceDuringBurn mockDsc = new MockDSCCrashPriceDuringBurn(cfg.wethUsdPriceFeed, owner);
+        MockDSCCrashPriceDuringBurn mockDsc = new MockDSCCrashPriceDuringBurn(cfg.ethUsdPriceFeed, owner);
         dsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
         mockDsc.transferOwnership(address(dsce));
         vm.stopPrank();
@@ -619,7 +619,7 @@ contract LiquidateTest is DSCEngineTest {
 
         // Act/Assert
         // ETH price gues from 2k$ to 18$ before redeem, then crashes to 0 before burn
-        MockV3Aggregator(cfg.wethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
+        MockV3Aggregator(cfg.ethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
         vm.expectRevert(DSCEngine.DSCEngine__HealthFactorNotImproved.selector);
         dsce.liquidate(cfg.weth, user, debtToCover);
         vm.stopPrank();
@@ -633,7 +633,7 @@ contract LiquidateTest is DSCEngineTest {
         dsce.depositCollateralAndMintDsc(cfg.weth, amountCollateral, amountToMint);
         vm.stopPrank();
 
-        MockV3Aggregator(cfg.wethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
+        MockV3Aggregator(cfg.ethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
         uint256 expectedHealthFactor =
             dsce.calculateHealthFactor(amountToMint, dsce.getUsdValue(cfg.weth, amountCollateral));
 
@@ -645,7 +645,7 @@ contract LiquidateTest is DSCEngineTest {
     }
 
     function testLiquidationEmitsCollateralRedeemed() public depositedCollateralAndMintedDsc {
-        MockV3Aggregator(cfg.wethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
+        MockV3Aggregator(cfg.ethUsdPriceFeed).updateAnswer(ETH_USD_PLUMMETED_PRICE);
         ERC20Mock(cfg.weth).mint(liquidator, amountCollateralLiquidator);
 
         vm.startPrank(liquidator);
@@ -703,8 +703,8 @@ contract LiquidateTest is DSCEngineTest {
 
 contract GetterFunctionsTest is DSCEngineTest {
     function testGetCollateralTokenPriceFeed() public view {
-        assertEq(dsce.getCollateralTokenPriceFeed(cfg.weth), cfg.wethUsdPriceFeed);
-        assertEq(dsce.getCollateralTokenPriceFeed(cfg.wbtc), cfg.wbtcUsdPriceFeed);
+        assertEq(dsce.getCollateralTokenPriceFeed(cfg.weth), cfg.ethUsdPriceFeed);
+        assertEq(dsce.getCollateralTokenPriceFeed(cfg.wbtc), cfg.btcUsdPriceFeed);
     }
 
     function testGetCollateralTokens() public view {

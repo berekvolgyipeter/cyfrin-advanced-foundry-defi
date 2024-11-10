@@ -13,8 +13,8 @@ contract HelperConfig is Script {
     int256 public constant BTC_USD_PRICE = 60_000e8;
 
     struct NetworkConfig {
-        address wethUsdPriceFeed;
-        address wbtcUsdPriceFeed;
+        address ethUsdPriceFeed;
+        address btcUsdPriceFeed;
         address weth;
         address wbtc;
         address deployer;
@@ -37,8 +37,8 @@ contract HelperConfig is Script {
 
     function getSepoliaEthConfig() public view returns (NetworkConfig memory sepoliaNetworkConfig) {
         sepoliaNetworkConfig = NetworkConfig({
-            wethUsdPriceFeed: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
-            wbtcUsdPriceFeed: 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43,
+            ethUsdPriceFeed: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
+            btcUsdPriceFeed: 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43,
             weth: 0xdd13E55209Fd76AfE204dBda4007C227904f0a81,
             wbtc: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,
             deployer: vm.envAddress("PUBLIC_KEY_DEV")
@@ -46,7 +46,7 @@ contract HelperConfig is Script {
     }
 
     function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory anvilNetworkConfig) {
-        if (networkConfig.wethUsdPriceFeed != address(0)) {
+        if (networkConfig.ethUsdPriceFeed != address(0)) {
             return networkConfig;
         }
 
@@ -59,9 +59,9 @@ contract HelperConfig is Script {
         vm.stopBroadcast();
 
         anvilNetworkConfig = NetworkConfig({
-            wethUsdPriceFeed: address(ethUsdPriceFeed),
+            ethUsdPriceFeed: address(ethUsdPriceFeed),
             weth: address(wethMock),
-            wbtcUsdPriceFeed: address(btcUsdPriceFeed),
+            btcUsdPriceFeed: address(btcUsdPriceFeed),
             wbtc: address(wbtcMock),
             deployer: ANVIL_PUBLIC_KEY_0
         });
