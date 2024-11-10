@@ -785,6 +785,9 @@ contract GetterFunctionsTest is DSCEngineTest {
 
     function testGetTokenDecimalsNoDecimals() public {
         NoDecimalsTokenMock noDecimalsToken = new NoDecimalsTokenMock("NoDecimalsToken", "NDT");
+        tokenAddresses = [address(noDecimalsToken)];
+        feedAddresses = [address(makeAddr("feedAddress"))];
+        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
         assertEq(dsce.getTokenDecimals(address(noDecimalsToken)), DEFAULT_TOKEN_DECIMALS);
     }
 }

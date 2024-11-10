@@ -52,6 +52,7 @@ contract DSCEngine is ReentrancyGuard {
     uint8 private constant DEFAULT_TOKEN_DECIMALS = 18;
 
     mapping(address token => address priceFeed) private s_priceFeeds;
+    mapping(address token => uint8 decimals) private s_decimals;
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposited;
     mapping(address user => uint256 amount) private s_DSCMinted;
     /// @dev If we know exactly how many tokens we have, we could make this immutable!
@@ -84,6 +85,7 @@ contract DSCEngine is ReentrancyGuard {
         }
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             s_priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
+            s_decimals[tokenAddresses[i]] = _getTokenDecimals(tokenAddresses[i]);
             s_collateralTokens.push(tokenAddresses[i]);
         }
         i_dsc = DecentralizedStableCoin(dscAddress);
@@ -290,10 +292,12 @@ contract DSCEngine is ReentrancyGuard {
         // we use only the return value we are interested in
         // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
+        // Token amounts are not always in 1e18 precision
+        uint256 additionalAmountPrecision = 10 ** (DEFAULT_TOKEN_DECIMALS - s_decimals[token]);
         // The returned value from Chainlink will be in 1e8 precision
         // Most USD pairs have 8 decimals, so we will just pretend they all do
         // We want to have everything in terms of WEI, so we multiply be 1e10
-        return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
+        return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount * additionalAmountPrecision) / PRECISION;
     }
 
     function _getAccountInformation(address user)
@@ -350,11 +354,13 @@ contract DSCEngine is ReentrancyGuard {
         // we use only the return value we are interested in
         // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
-        return ((usdAmount * PRECISION) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
+        // We must return the amount in the token's precison
+        uint256 tokenPrecision = 10 ** s_decimals[token];
+        return ((usdAmount * tokenPrecision) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
     }
 
     function getTokenDecimals(address token) external view returns (uint8) {
-        return _getTokenDecimals(token);
+        return s_decimals[token];
     }
 
     function getUsdValue(address token, uint256 amount) external view returns (uint256) {
