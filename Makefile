@@ -18,7 +18,7 @@ test :; forge test -vvv
 
 test-fork-sepolia :; @forge test --fork-url $(RPC_URL_SEPOLIA) -vvv
 
-coverage :; forge coverage -vvv
+coverage :; forge coverage --skip InvariantsTest.t.sol
 
 coverage-lcov :; forge coverage --report lcov
 

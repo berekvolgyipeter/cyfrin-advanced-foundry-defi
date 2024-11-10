@@ -2,8 +2,9 @@
 pragma solidity ^0.8.27;
 
 import { AggregatorV3Interface } from "chainlink/shared/interfaces/AggregatorV3Interface.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "openzeppelin/utils/ReentrancyGuard.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20Decimals } from "src/interfaces/IERC20Decimals.sol";
 import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
 import { OracleLib } from "src/libraries/OracleLib.sol";
 
@@ -48,6 +49,7 @@ contract DSCEngine is ReentrancyGuard {
     uint256 private constant MIN_HEALTH_FACTOR = 1e18;
     uint256 private constant PRECISION = 1e18;
     uint256 private constant ADDITIONAL_FEED_PRECISION = 1e10;
+    uint8 private constant DEFAULT_TOKEN_DECIMALS = 18;
 
     mapping(address token => address priceFeed) private s_priceFeeds;
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposited;
@@ -274,6 +276,15 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /* ==================== PRIVATE & INTERNAL VIEW & PURE FUNCTIONS ======================================== */
+    function _getTokenDecimals(address token) private view returns (uint8) {
+        try IERC20Decimals(token).decimals() returns (uint8 decimals) {
+            return decimals;
+        } catch {
+            // In older ERC20 tokens the decimal() function might not be implemented
+            return DEFAULT_TOKEN_DECIMALS;
+        }
+    }
+
     function _getUsdValue(address token, uint256 amount) private view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
         // we use only the return value we are interested in
@@ -342,6 +353,10 @@ contract DSCEngine is ReentrancyGuard {
         return ((usdAmount * PRECISION) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
     }
 
+    function getTokenDecimals(address token) external view returns (uint8) {
+        return _getTokenDecimals(token);
+    }
+
     function getUsdValue(address token, uint256 amount) external view returns (uint256) {
         return _getUsdValue(token, amount);
     }
@@ -391,6 +406,10 @@ contract DSCEngine is ReentrancyGuard {
 
     function getMinHealthFactor() external pure returns (uint256) {
         return MIN_HEALTH_FACTOR;
+    }
+
+    function getDefaultTokenDecimals() external pure returns (uint256) {
+        return DEFAULT_TOKEN_DECIMALS;
     }
 
     function getCollateralBalance(address user, address token) external view returns (uint256) {

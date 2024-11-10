@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { Test } from "forge-std/Test.sol";
 import { MockV3Aggregator } from "chainlink/tests/MockV3Aggregator.sol";
 import { ERC20DecimalsMock } from "test/mocks/ERC20DecimalsMock.sol";
+import { NoDecimalsTokenMock } from "test/mocks/NoDecimalsTokenMock.sol";
 import {
     MockDSCFailedMint,
     MockDSCFailedTransfer,
@@ -33,6 +34,9 @@ abstract contract DSCEngineTest is Test {
     uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
     uint256 public constant MIN_HEALTH_FACTOR = 1e18;
     uint256 public constant LIQUIDATION_THRESHOLD = 200;
+    uint8 public constant DEFAULT_TOKEN_DECIMALS = 18;
+    uint8 public constant WETH_DECIMALS = 18;
+    uint8 public constant WBTC_DECIMALS = 8;
 
     address public user = makeAddr("user");
     uint256 public amountCollateral = 10 ether;
@@ -41,7 +45,7 @@ abstract contract DSCEngineTest is Test {
     address public liquidator = makeAddr("liquidator");
     uint256 public amountCollateralLiquidator = 20 ether;
 
-    address public notAllowedToken = address(new ERC20DecimalsMock("NAT", "NAT", 18));
+    address public notAllowedToken = address(new ERC20DecimalsMock("NAT", "NAT", DEFAULT_TOKEN_DECIMALS));
     address[] public tokenAddresses;
     address[] public feedAddresses;
 
@@ -768,5 +772,19 @@ contract GetterFunctionsTest is DSCEngineTest {
 
     function testGetAdditionalFeedPrecision() public view {
         assertEq(dsce.getAdditionalFeedPrecision(), ADDITIONAL_FEED_PRECISION);
+    }
+
+    function testGetDefaultTokenDecimals() public view {
+        assertEq(dsce.getDefaultTokenDecimals(), DEFAULT_TOKEN_DECIMALS);
+    }
+
+    function testGetTokenDecimals() public view {
+        assertEq(dsce.getTokenDecimals(cfg.weth), WETH_DECIMALS);
+        assertEq(dsce.getTokenDecimals(cfg.wbtc), WBTC_DECIMALS);
+    }
+
+    function testGetTokenDecimalsNoDecimals() public {
+        NoDecimalsTokenMock noDecimalsToken = new NoDecimalsTokenMock("NoDecimalsToken", "NDT");
+        assertEq(dsce.getTokenDecimals(address(noDecimalsToken)), DEFAULT_TOKEN_DECIMALS);
     }
 }
