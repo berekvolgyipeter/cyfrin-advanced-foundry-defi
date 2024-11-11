@@ -8,7 +8,7 @@ import { DSCEngine } from "src/DSCEngine.sol";
 import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
 import { HelperConfig } from "script/HelperConfig.s.sol";
 import { DeployDSC } from "script/DeployDSC.s.sol";
-import { FailOnRevertHandler, ContinueOnRevertHandler } from "test/fuzz/Handlers.t.sol";
+import { FailOnRevertHandler, ContinueOnRevertHandler } from "test/invariant/Handlers.t.sol";
 
 abstract contract BaseInvariant is StdInvariant, Test {
     DSCEngine public dsce;

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.27;
 
 import { AggregatorV3Interface } from "chainlink/shared/interfaces/AggregatorV3Interface.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "openzeppelin/utils/ReentrancyGuard.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
 import { OracleLib } from "src/libraries/OracleLib.sol";
 
@@ -27,7 +27,9 @@ import { OracleLib } from "src/libraries/OracleLib.sol";
  */
 contract DSCEngine is ReentrancyGuard {
     /* ==================== ERRORS ============================================================ */
+    error DSCEngine__TokenAddressesAndTokenDecimalsAmountsDontMatch();
     error DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
+    error DSCEngine__TokenDecimalsGreaterThan18();
     error DSCEngine__NeedsMoreThanZero();
     error DSCEngine__TokenNotAllowed(address token);
     error DSCEngine__TransferFailed();
@@ -48,8 +50,10 @@ contract DSCEngine is ReentrancyGuard {
     uint256 private constant MIN_HEALTH_FACTOR = 1e18;
     uint256 private constant PRECISION = 1e18;
     uint256 private constant ADDITIONAL_FEED_PRECISION = 1e10;
+    uint8 private constant DEFAULT_TOKEN_DECIMALS = 18;
 
     mapping(address token => address priceFeed) private s_priceFeeds;
+    mapping(address token => uint8 decimals) private s_decimals;
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposited;
     mapping(address user => uint256 amount) private s_DSCMinted;
     /// @dev If we know exactly how many tokens we have, we could make this immutable!
@@ -76,12 +80,24 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /* ==================== CONSTRUCTOR ============================================================ */
-    constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) {
+    constructor(
+        address[] memory tokenAddresses,
+        uint8[] memory tokenDecimals,
+        address[] memory priceFeedAddresses,
+        address dscAddress
+    ) {
+        if (tokenAddresses.length != tokenDecimals.length) {
+            revert DSCEngine__TokenAddressesAndTokenDecimalsAmountsDontMatch();
+        }
         if (tokenAddresses.length != priceFeedAddresses.length) {
             revert DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
         }
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (tokenDecimals[i] > DEFAULT_TOKEN_DECIMALS) {
+                revert DSCEngine__TokenDecimalsGreaterThan18();
+            }
             s_priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
+            s_decimals[tokenAddresses[i]] = tokenDecimals[i];
             s_collateralTokens.push(tokenAddresses[i]);
         }
         i_dsc = DecentralizedStableCoin(dscAddress);
@@ -279,10 +295,13 @@ contract DSCEngine is ReentrancyGuard {
         // we use only the return value we are interested in
         // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
+        // Token amounts are not always in 1e18 precision
+        // We assume there is no token with more than 18 decimals
+        uint256 additionalAmountPrecision = 10 ** (DEFAULT_TOKEN_DECIMALS - s_decimals[token]);
         // The returned value from Chainlink will be in 1e8 precision
         // Most USD pairs have 8 decimals, so we will just pretend they all do
         // We want to have everything in terms of WEI, so we multiply be 1e10
-        return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
+        return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount * additionalAmountPrecision) / PRECISION;
     }
 
     function _getAccountInformation(address user)
@@ -339,7 +358,13 @@ contract DSCEngine is ReentrancyGuard {
         // we use only the return value we are interested in
         // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
-        return ((usdAmount * PRECISION) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
+        // We must return the amount in the token's precison
+        uint256 tokenPrecision = 10 ** s_decimals[token];
+        return ((usdAmount * tokenPrecision) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
+    }
+
+    function getTokenDecimals(address token) external view returns (uint8) {
+        return s_decimals[token];
     }
 
     function getUsdValue(address token, uint256 amount) external view returns (uint256) {
@@ -391,6 +416,10 @@ contract DSCEngine is ReentrancyGuard {
 
     function getMinHealthFactor() external pure returns (uint256) {
         return MIN_HEALTH_FACTOR;
+    }
+
+    function getDefaultTokenDecimals() external pure returns (uint256) {
+        return DEFAULT_TOKEN_DECIMALS;
     }
 
     function getCollateralBalance(address user, address token) external view returns (uint256) {
