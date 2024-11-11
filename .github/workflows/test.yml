@@ -46,7 +46,12 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Run Forge tests
+      - name: Run Unit tests
         run: |
-          forge test -vvv
-        id: test
+          make test-unit
+        id: unit-test
+      
+      - name: Run Invariant tests
+        run: |
+          make test-invariant
+        id: invariant-test   
