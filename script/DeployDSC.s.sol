@@ -9,16 +9,18 @@ import { DSCEngine } from "src/DSCEngine.sol";
 contract DeployDSC is Script {
     address[] public tokenAddresses;
     address[] public priceFeedAddresses;
+    uint8[] public tokenDecimals;
 
     function run() external returns (DecentralizedStableCoin, DSCEngine, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory cfg = helperConfig.getNetworkConfig();
         tokenAddresses = [cfg.weth, cfg.wbtc];
         priceFeedAddresses = [cfg.ethUsdPriceFeed, cfg.btcUsdPriceFeed];
+        tokenDecimals = [cfg.wethDecimals, cfg.wbtcDecimals];
 
         vm.startBroadcast(cfg.deployer);
         DecentralizedStableCoin dsc = new DecentralizedStableCoin(cfg.deployer);
-        DSCEngine dscEngine = new DSCEngine(tokenAddresses, priceFeedAddresses, address(dsc));
+        DSCEngine dscEngine = new DSCEngine(tokenAddresses, tokenDecimals, priceFeedAddresses, address(dsc));
         dsc.transferOwnership(address(dscEngine));
         vm.stopBroadcast();
 

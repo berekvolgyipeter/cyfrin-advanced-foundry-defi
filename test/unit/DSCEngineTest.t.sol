@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test } from "forge-std/Test.sol";
 import { MockV3Aggregator } from "chainlink/tests/MockV3Aggregator.sol";
 import { ERC20DecimalsMock } from "test/mocks/ERC20DecimalsMock.sol";
-import { NoDecimalsTokenMock } from "test/mocks/NoDecimalsTokenMock.sol";
 import {
     MockDSCFailedMint,
     MockDSCFailedTransfer,
@@ -48,6 +47,7 @@ abstract contract DSCEngineTest is Test {
     address public notAllowedToken = address(new ERC20DecimalsMock("NAT", "NAT", DEFAULT_TOKEN_DECIMALS));
     address[] public tokenAddresses;
     address[] public feedAddresses;
+    uint8[] public tokenDecimals;
 
     function setUp() public {
         HelperConfig helperConfig;
@@ -57,6 +57,7 @@ abstract contract DSCEngineTest is Test {
 
         tokenAddresses = [cfg.weth, cfg.wbtc];
         feedAddresses = [cfg.ethUsdPriceFeed, cfg.btcUsdPriceFeed];
+        tokenDecimals = [cfg.wethDecimals, cfg.wbtcDecimals];
 
         ERC20DecimalsMock(cfg.weth).mint(user, STARTING_ERC20_BALANCE);
         ERC20DecimalsMock(cfg.wbtc).mint(user, STARTING_ERC20_BALANCE);
@@ -68,7 +69,7 @@ abstract contract DSCEngineTest is Test {
 
         vm.startPrank(owner);
         MockDSCFailedMint mockDsc = new MockDSCFailedMint(owner);
-        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        dsce = new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(mockDsc));
         mockDsc.transferOwnership(address(dsce));
         vm.stopPrank();
     }
@@ -81,7 +82,8 @@ abstract contract DSCEngineTest is Test {
         MockDSCFailedTransfer mockWeth = new MockDSCFailedTransfer(owner);
         tokenAddresses = [address(mockWeth)];
         feedAddresses = [cfg.ethUsdPriceFeed];
-        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        tokenDecimals = [cfg.wethDecimals];
+        dsce = new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(dsc));
         mockWeth.mint(user, STARTING_ERC20_BALANCE);
         dsc.transferOwnership(address(dsce));
         vm.stopPrank();
@@ -93,7 +95,7 @@ abstract contract DSCEngineTest is Test {
         address owner = msg.sender;
         vm.startPrank(owner);
         MockDSCFailedTransferFrom mockDsc = new MockDSCFailedTransferFrom(owner);
-        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        dsce = new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(mockDsc));
         mockDsc.mint(user, amountCollateral);
         mockDsc.transferOwnership(address(dsce));
         vm.stopPrank();
@@ -108,7 +110,8 @@ abstract contract DSCEngineTest is Test {
         MockDSCFailedTransferFrom mockWeth = new MockDSCFailedTransferFrom(owner);
         tokenAddresses = [address(mockWeth)];
         feedAddresses = [cfg.ethUsdPriceFeed];
-        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        tokenDecimals = [cfg.wethDecimals];
+        dsce = new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(dsc));
         mockWeth.mint(user, STARTING_ERC20_BALANCE);
         dsc.transferOwnership(address(dsce));
         vm.stopPrank();
@@ -175,7 +178,7 @@ abstract contract DSCEngineTest is Test {
 
 contract ConstructorTest is DSCEngineTest {
     function testConstructor() public {
-        DSCEngine newDsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        DSCEngine newDsce = new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(dsc));
         address[] memory collateralTokens = newDsce.getCollateralTokens();
 
         assertEq(collateralTokens.length, tokenAddresses.length);
@@ -187,10 +190,17 @@ contract ConstructorTest is DSCEngineTest {
     }
 
     function testRevertsIfTokenLengthDoesntMatchPriceFeeds() public {
-        tokenAddresses = [cfg.weth];
+        feedAddresses = [cfg.ethUsdPriceFeed];
 
         vm.expectRevert(DSCEngine.DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch.selector);
-        new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
+        new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(dsc));
+    }
+
+    function testRevertsIfTokenLengthDoesntMatchTokenDecimals() public {
+        tokenDecimals = [cfg.wethDecimals];
+
+        vm.expectRevert(DSCEngine.DSCEngine__TokenAddressesAndTokenDecimalsAmountsDontMatch.selector);
+        new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(dsc));
     }
 }
 
@@ -605,7 +615,7 @@ contract LiquidateTest is DSCEngineTest {
         address owner = msg.sender;
         vm.startPrank(owner);
         MockDSCCrashPriceDuringBurn mockDsc = new MockDSCCrashPriceDuringBurn(cfg.ethUsdPriceFeed, owner);
-        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        dsce = new DSCEngine(tokenAddresses, tokenDecimals, feedAddresses, address(mockDsc));
         mockDsc.transferOwnership(address(dsce));
         vm.stopPrank();
 
@@ -781,13 +791,5 @@ contract GetterFunctionsTest is DSCEngineTest {
     function testGetTokenDecimals() public view {
         assertEq(dsce.getTokenDecimals(cfg.weth), WETH_DECIMALS);
         assertEq(dsce.getTokenDecimals(cfg.wbtc), WBTC_DECIMALS);
-    }
-
-    function testGetTokenDecimalsNoDecimals() public {
-        NoDecimalsTokenMock noDecimalsToken = new NoDecimalsTokenMock("NoDecimalsToken", "NDT");
-        tokenAddresses = [address(noDecimalsToken)];
-        feedAddresses = [address(makeAddr("feedAddress"))];
-        dsce = new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
-        assertEq(dsce.getTokenDecimals(address(noDecimalsToken)), DEFAULT_TOKEN_DECIMALS);
     }
 }

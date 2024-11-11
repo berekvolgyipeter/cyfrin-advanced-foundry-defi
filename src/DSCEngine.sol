@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { AggregatorV3Interface } from "chainlink/shared/interfaces/AggregatorV3Interface.sol";
 import { ReentrancyGuard } from "openzeppelin/utils/ReentrancyGuard.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { IERC20Decimals } from "src/interfaces/IERC20Decimals.sol";
 import { DecentralizedStableCoin } from "src/DecentralizedStableCoin.sol";
 import { OracleLib } from "src/libraries/OracleLib.sol";
 
@@ -28,6 +27,7 @@ import { OracleLib } from "src/libraries/OracleLib.sol";
  */
 contract DSCEngine is ReentrancyGuard {
     /* ==================== ERRORS ============================================================ */
+    error DSCEngine__TokenAddressesAndTokenDecimalsAmountsDontMatch();
     error DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
     error DSCEngine__NeedsMoreThanZero();
     error DSCEngine__TokenNotAllowed(address token);
@@ -79,13 +79,21 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /* ==================== CONSTRUCTOR ============================================================ */
-    constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) {
+    constructor(
+        address[] memory tokenAddresses,
+        uint8[] memory tokenDecimals,
+        address[] memory priceFeedAddresses,
+        address dscAddress
+    ) {
+        if (tokenAddresses.length != tokenDecimals.length) {
+            revert DSCEngine__TokenAddressesAndTokenDecimalsAmountsDontMatch();
+        }
         if (tokenAddresses.length != priceFeedAddresses.length) {
             revert DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
         }
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             s_priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
-            s_decimals[tokenAddresses[i]] = _getTokenDecimals(tokenAddresses[i]);
+            s_decimals[tokenAddresses[i]] = tokenDecimals[i];
             s_collateralTokens.push(tokenAddresses[i]);
         }
         i_dsc = DecentralizedStableCoin(dscAddress);
@@ -278,21 +286,13 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /* ==================== PRIVATE & INTERNAL VIEW & PURE FUNCTIONS ======================================== */
-    function _getTokenDecimals(address token) private view returns (uint8) {
-        try IERC20Decimals(token).decimals() returns (uint8 decimals) {
-            return decimals;
-        } catch {
-            // In older ERC20 tokens the decimal() function might not be implemented
-            return DEFAULT_TOKEN_DECIMALS;
-        }
-    }
-
     function _getUsdValue(address token, uint256 amount) private view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
         // we use only the return value we are interested in
         // slither-disable-next-line unused-return
         (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
         // Token amounts are not always in 1e18 precision
+        // We assume there is no token with more than 18 decimals
         uint256 additionalAmountPrecision = 10 ** (DEFAULT_TOKEN_DECIMALS - s_decimals[token]);
         // The returned value from Chainlink will be in 1e8 precision
         // Most USD pairs have 8 decimals, so we will just pretend they all do
