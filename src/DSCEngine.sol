@@ -29,6 +29,7 @@ contract DSCEngine is ReentrancyGuard {
     /* ==================== ERRORS ============================================================ */
     error DSCEngine__TokenAddressesAndTokenDecimalsAmountsDontMatch();
     error DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
+    error DSCEngine__TokenDecimalsGreaterThan18();
     error DSCEngine__NeedsMoreThanZero();
     error DSCEngine__TokenNotAllowed(address token);
     error DSCEngine__TransferFailed();
@@ -92,6 +93,9 @@ contract DSCEngine is ReentrancyGuard {
             revert DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
         }
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (tokenDecimals[i] > DEFAULT_TOKEN_DECIMALS) {
+                revert DSCEngine__TokenDecimalsGreaterThan18();
+            }
             s_priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
             s_decimals[tokenAddresses[i]] = tokenDecimals[i];
             s_collateralTokens.push(tokenAddresses[i]);
