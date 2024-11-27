@@ -9,7 +9,7 @@ PRIVATE_KEY_ANVIL_0 := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7
 RPC_URL_ANVIL := http://localhost:8545
 
 # ---------- dependencies ----------
-remove :; rm -rf dependencies/ && rm soldeer.lock
+uninstall :; rm -rf dependencies/ && rm soldeer.lock
 install :; forge soldeer install
 update:; forge soldeer update
 
@@ -31,7 +31,7 @@ test-fork-sepolia :; $(TEST) --fork-url $(RPC_URL_SEPOLIA)
 test-fork-mainnet :; $(TEST) --fork-url $(RPC_URL_MAINNET)
 
 # ---------- coverage ----------
-coverage :; forge coverage --skip InvariantsTest.t.sol --no-match-coverage test
+coverage :; forge coverage --no-match-test invariant --no-match-coverage "^(test|script)/"
 coverage-lcov :; make coverage EXTRA_FLAGS="--report lcov"
 coverage-txt :; make coverage EXTRA_FLAGS="--report debug > coverage.txt"
 
