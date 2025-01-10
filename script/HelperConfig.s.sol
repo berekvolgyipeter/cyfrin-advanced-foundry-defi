@@ -5,7 +5,12 @@ import { Script } from "forge-std/Script.sol";
 import { MockV3Aggregator } from "chainlink/tests/MockV3Aggregator.sol";
 import { ERC20DecimalsMock } from "test/mocks/ERC20Mock.sol";
 
+uint256 constant ANVIL_CHAIN_ID = 31_337;
+uint256 constant ETH_SEPOLIA_CHAIN_ID = 11_155_111;
+
 contract HelperConfig is Script {
+    error HelperConfig__UnknownChainId();
+
     struct NetworkConfig {
         address ethUsdPriceFeed;
         address btcUsdPriceFeed;
@@ -17,7 +22,6 @@ contract HelperConfig is Script {
     }
 
     address public constant ANVIL_PUBLIC_KEY_0 = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-    uint256 public constant ETH_SEPOLIA_CHAIN_ID = 11_155_111;
     int256 public constant ETH_USD_PRICE = 2000e8;
     int256 public constant BTC_USD_PRICE = 60_000e8;
     uint8 public constant FEED_DECIMALS = 8;
@@ -27,27 +31,17 @@ contract HelperConfig is Script {
     NetworkConfig public networkConfig;
 
     constructor() {
-        if (block.chainid == ETH_SEPOLIA_CHAIN_ID) {
+        if (block.chainid == ANVIL_CHAIN_ID) {
+            networkConfig = getOrCreateAnvilEthConfig();
+        } else if (block.chainid == ETH_SEPOLIA_CHAIN_ID) {
             networkConfig = getSepoliaEthConfig();
         } else {
-            networkConfig = getOrCreateAnvilEthConfig();
+            revert HelperConfig__UnknownChainId();
         }
     }
 
     function getNetworkConfig() public view returns (NetworkConfig memory) {
         return networkConfig;
-    }
-
-    function getSepoliaEthConfig() public view returns (NetworkConfig memory sepoliaNetworkConfig) {
-        sepoliaNetworkConfig = NetworkConfig({
-            ethUsdPriceFeed: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
-            btcUsdPriceFeed: 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43,
-            weth: 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9,
-            wbtc: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,
-            wethDecimals: WETH_DECIMALS,
-            wbtcDecimals: WBTC_DECIMALS,
-            deployer: vm.envAddress("ADDRESS_DEV")
-        });
     }
 
     function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory anvilNetworkConfig) {
@@ -71,6 +65,18 @@ contract HelperConfig is Script {
             wethDecimals: WETH_DECIMALS,
             wbtcDecimals: WBTC_DECIMALS,
             deployer: ANVIL_PUBLIC_KEY_0
+        });
+    }
+
+    function getSepoliaEthConfig() public view returns (NetworkConfig memory sepoliaNetworkConfig) {
+        sepoliaNetworkConfig = NetworkConfig({
+            ethUsdPriceFeed: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
+            btcUsdPriceFeed: 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43,
+            weth: 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9,
+            wbtc: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,
+            wethDecimals: WETH_DECIMALS,
+            wbtcDecimals: WBTC_DECIMALS,
+            deployer: vm.envAddress("ADDRESS_DEV")
         });
     }
 }

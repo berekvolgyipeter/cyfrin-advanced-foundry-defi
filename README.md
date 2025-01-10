@@ -24,3 +24,7 @@ If a user's collateral value drops below 200%, other users may liquidate the use
 
 * [DecentralizedStableCoin](https://sepolia.etherscan.io/address/0x6953688C48B0d111303b348855A3Ce8c4E16ae76)
 * [DSCEngine](https://sepolia.etherscan.io/address/0xad2C82d9418061C2D5c38490451Ed69154c24AC6)
+
+### Interactions
+
+* [Deposit collateral and mintd DSC](https://sepolia.etherscan.io/tx/0x91d05ff052ab84b1e2f8955a4cd9f6a77739e47558297f95300326e05dc42408)
