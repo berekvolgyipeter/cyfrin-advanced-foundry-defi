@@ -51,8 +51,11 @@ check-etherscan-api:
 anvil :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 1
 
 NETWORK_ARGS_ANVIL := --rpc-url $(RPC_URL_ANVIL) --private-key $(PRIVATE_KEY_ANVIL_0) --broadcast
-NETWORK_ARGS_SEPOLIA := --rpc-url $(RPC_URL_SEPOLIA) --account $(ACCOUNT_DEV) --sender $(ADDRESS_DEV) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+NETWORK_ARGS_SEPOLIA := --rpc-url $(RPC_URL_SEPOLIA) --account $(ACCOUNT_DEV) --sender $(ADDRESS_DEV) --broadcast -vvvv
+VERIFY := --verify --etherscan-api-key $(ETHERSCAN_API_KEY)
 DEPLOY := forge script script/DeployDSC.s.sol:DeployDSC
 
 deploy :; $(DEPLOY) $(NETWORK_ARGS_ANVIL)
-deploy-sepolia :; $(DEPLOY) $(NETWORK_ARGS_SEPOLIA)
+deploy-sepolia :; $(DEPLOY) $(NETWORK_ARGS_SEPOLIA) $(VERIFY)
+deposit-and-mint-sepolia :; forge script script/Interactions.s.sol:DepositCollateralAndMintDsc $(NETWORK_ARGS_SEPOLIA)
+redeem-for-dsc-sepolia :; forge script script/Interactions.s.sol:RedeemCollateralForDsc $(NETWORK_ARGS_SEPOLIA)
