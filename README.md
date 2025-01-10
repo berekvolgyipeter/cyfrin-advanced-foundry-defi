@@ -10,13 +10,13 @@ If a user's collateral value drops below 200%, other users may liquidate the use
 ## Stabeloin properties
 
 1. Relative Stability: Achored or Pegged to the US Dollar
-   1. Chainlink Pricefeed
+   1. [Chainlink Pricefeed](https://docs.chain.link/data-feeds/price-feeds/addresses?network=ethereum&page=1)
    2. Function to convert ETH & BTC to USD
 2. Stability Mechanism (Minting/Burning): Algorithmically Decentralized
    1. Users may only mint the stablecoin with enough collateral
 3. Collateral: Exogenous (Crypto)
-   1. wETH
-   2. wBTC
+   1. [WETH](https://coinmarketcap.com/academy/article/what-is-wrapped-ethereum-weth)
+   2. [WBTC](https://www.wbtc.network)
 
 ## Deployment on Sepolia
 
@@ -27,7 +27,7 @@ If a user's collateral value drops below 200%, other users may liquidate the use
 
 ### Interactions
 
-* [Deposit collateral and mintd DSC](https://sepolia.etherscan.io/tx/0x07c482c5d235c88ec2747b4fa18c533f9f212e8867a1a3522920e831c21af197)
+* [Deposit collateral and mint DSC](https://sepolia.etherscan.io/tx/0x07c482c5d235c88ec2747b4fa18c533f9f212e8867a1a3522920e831c21af197)
 * [Redeem collateral for DSC](https://sepolia.etherscan.io/tx/0x12435fd5f05ce29dbffd931a65e97a95bcbb493beedfe5e1965f1ecb8d8666b7)
 * [Deposit collateral](https://sepolia.etherscan.io/tx/0xa6af2ed2f609e96aabe63cd2654340866e09f5defc06a012f4ab662ad7774bb5)
 * [Redeem collateral](https://sepolia.etherscan.io/tx/0x3c30eb1741c74a295b5829ee70b1daa220a8f9ae1e298e680543028cffbf3526)
