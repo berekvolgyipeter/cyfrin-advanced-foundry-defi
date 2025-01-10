@@ -2,7 +2,7 @@
 
 This is a section of the [Cyfrin Foundry Solidity Course](https://github.com/Cyfrin/foundry-full-course-cu?tab=readme-ov-file#advanced-foundry-section-3-foundry-defi--stablecoin-the-pinnacle-project-get-here).
 
-The audit on the [original codebase](https://github.com/Cyfrin/foundry-defi-stablecoin-cu) can be checked [here](https://github.com/Cyfrin/foundry-defi-stablecoin-cu/blob/main/audits/codehawks-08-05-2023.md).
+The [original codebase](https://github.com/Cyfrin/foundry-defi-stablecoin-cu) has been audited which can be checked [here](https://github.com/Cyfrin/foundry-defi-stablecoin-cu/blob/main/audits/codehawks-08-05-2023.md).
 
 The project implements a fully decentralized and algoritmically stabilized ERC20 stablecoin called DSC. The value of 1 DSC is handled as 1 USD in the protocol. Users can mint DSC if they deposit collateral at least 200% value of the minted DSC.
 If a user's collateral value drops below 200%, other users may liquidate the user by burning their DSC and they receive the the same value in collateral plus an extra 10% liqudation bonus as an incentive to keep the currency collateralized. If a user liquidates herself she doesn't lose the 10% liquidation bonus to a liquidator.
@@ -17,3 +17,8 @@ If a user's collateral value drops below 200%, other users may liquidate the use
 3. Collateral: Exogenous (Crypto)
    1. wETH
    2. wBTC
+
+## Deployment on Sepolia
+
+* [DecentralizedStableCoin](https://sepolia.etherscan.io/address/0x6953688C48B0d111303b348855A3Ce8c4E16ae76)
+* [DSCEngine](https://sepolia.etherscan.io/address/0xad2C82d9418061C2D5c38490451Ed69154c24AC6)
