@@ -21,7 +21,7 @@ contract HelperConfig is Script {
         address deployer;
     }
 
-    address public constant ANVIL_PUBLIC_KEY_0 = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    address public constant ANVIL_ADDRESS_0 = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     int256 public constant ETH_USD_PRICE = 2000e8;
     int256 public constant BTC_USD_PRICE = 60_000e8;
     uint8 public constant FEED_DECIMALS = 8;
@@ -64,7 +64,7 @@ contract HelperConfig is Script {
             wbtc: address(wbtcMock),
             wethDecimals: WETH_DECIMALS,
             wbtcDecimals: WBTC_DECIMALS,
-            deployer: ANVIL_PUBLIC_KEY_0
+            deployer: ANVIL_ADDRESS_0
         });
     }
 
